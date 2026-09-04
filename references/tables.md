@@ -126,6 +126,31 @@ would render below its minimum useful width, drop it rather than show
 
 ---
 
+## Rule 5 — Don't hide columns in a table with a spanning row
+
+`display: none` on a `<th>` does not remove the column if any row spans it. An
+expanded detail row with `colspan="6"` keeps all six columns alive, and the
+width distribution then feeds columns nobody can see. A pinned column declared
+at 170px measured **418px**.
+
+Keep every column and let the table scroll with the first pinned. This is
+simpler *and* closer to what a two-panel mobile frame is actually describing —
+the frozen panel is an outcome of pinning, not a separate layout.
+
+One consequence worth planning for: an expanded detail row will scroll sideways
+with the table, which is wrong for prose. Pin its content instead:
+
+```css
+.detail > td { padding: 0; }
+.detail-grid {
+  position: sticky; left: 0;
+  width: calc(100vw - (var(--space-page-margin) * 2) - (var(--pad-card) * 2));
+  padding: var(--space-m);
+}
+```
+
+---
+
 ## Structural choice: scroll sideways, or become cards?
 
 Below roughly 560px there are two honest answers:

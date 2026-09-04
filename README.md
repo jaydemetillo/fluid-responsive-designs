@@ -150,6 +150,27 @@ tells you its own anchors without being asked.
 
 ---
 
+## Worked examples
+
+Three scenarios built end to end through the skill and validated with all four
+checks — see [`examples/`](examples/README.md).
+
+| | Scenario | References |
+|---|---|---|
+| **S1** | Item Catalogue, desktop → mobile | one Figma frame |
+| **S2** | Station Dashboard, mobile → desktop | one Figma frame |
+| **S3** | Equipment checks table | **none** |
+
+```bash
+python3 -m http.server 4178 --directory examples
+```
+
+Building them surfaced four real bugs, including a pinned column that declared
+170px and rendered 195px — the doctrine's own Rule 1, violated in our own build
+and caught only by measuring a live browser.
+
+---
+
 ## Profiles
 
 | Profile | What it is |

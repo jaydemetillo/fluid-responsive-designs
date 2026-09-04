@@ -137,7 +137,49 @@ a band is a design-system amendment, not a per-screen decision.
 
 ---
 
-## 12. Building a mobile frame literally · no automated check
+## 12. `flex-wrap: wrap` on a column container · `measure.mjs → overlap`
+
+```css
+.detail-grid { display: flex; flex-wrap: wrap; }          /* fine as a row */
+@media (max-width: 899px) { .detail-grid { flex-direction: column; } }  /* now broken */
+```
+
+A **column**-direction flex container with `flex-wrap: wrap` wraps into
+*columns*, not rows. Items stack on top of one another and overlap. A photo
+block rendered 104px tall around a 171px child, spilling over the description
+beneath it.
+
+**Rule:** row direction may wrap; column direction must set `flex-wrap: nowrap`
+explicitly when you flip it. Flipping `flex-direction` in a media query without
+also flipping `flex-wrap` is the trap.
+
+---
+
+## 13. Hiding a column that a `colspan` row still spans · `measure.mjs → drift`
+
+`display: none` on four `<th>` does **not** remove those columns if any row
+spans them — an expanded detail row with `colspan="6"` keeps all six alive.
+Width distribution then goes to columns that are not visible, and the pinned
+column measured **418px against a 170px token**.
+
+**Rule:** don't hide columns in a table that has a spanning row. Keep every
+column and let the table scroll with the first column pinned. The frozen-panel
+look is an *outcome* of pinning, not a second layout — which is what the mobile
+frame was describing in the first place.
+
+---
+
+## 14. Prose that needs sideways scrolling to read · no automated check
+
+When a table scrolls horizontally, an expanded detail row scrolls with it. Fine
+for cells; wrong for a paragraph.
+
+**Rule:** `position: sticky; left: 0` on the expanded panel's content, sized to
+the viewport, so the table slides underneath while the prose stays put.
+
+---
+
+## 15. Building a mobile frame literally · no automated check
 
 A frame drawn as two panels is describing an experience, not a DOM. Built
 literally you get two row lists that must stay in vertical lockstep forever.
