@@ -1,0 +1,63 @@
+/* Deliberately broken. Every rule in the doctrine, violated once.
+   audit.mjs must catch all of these. */
+
+:root {
+  /* static floor inside a clamp — reads 44px only at the top anchor */
+  --tap-target-min: clamp(2rem, 1.5rem + 1vw, 2.75rem);
+  --focus-ring-width: clamp(1px, 0.5px + 0.1vw, 2px);
+  --space-m: clamp(1rem, 0.8143rem + 0.7619vw, 1.5rem);
+  --font-body-default: clamp(0.75rem, 0.7036rem + 0.1905vw, 0.875rem);
+}
+
+.card__title {
+  font-size: var(--font-body-default);
+  line-height: 24px;          /* px leading on fluid text */
+  letter-spacing: 0.5px;      /* px tracking on fluid text */
+  color: #1a1a1a;             /* raw hex */
+}
+
+.hero__heading {
+  font-size: 5vw;             /* bare vw — breaks 200% zoom */
+}
+
+.prose {
+  max-width: clamp(45ch, 50ch, 75ch);   /* ch already fluid; nesting is undefined */
+}
+
+.nav__link {
+  min-height: 32px;           /* under the 44px tap floor */
+  padding: 8px;
+}
+
+/* ellipsis that silently does nothing: applied to the cell itself, and
+   missing the two properties that make it fire */
+td.description {
+  text-overflow: ellipsis;
+}
+
+/* a pinned column sized as a percentage */
+.col-item-name {
+  position: sticky;
+  left: 0;
+  width: 30%;
+}
+
+/* fixed height on a tap target — fluid padding can now shrink it */
+.btn--primary {
+  height: 40px;
+  font-size: clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem);
+}
+
+/* a breakpoint that answers no stated question */
+@media (min-width: 640px) {
+  .sidebar { display: block; }
+}
+
+/* scalar redefined on a breakpoint — this is what clamp() is for */
+@media (min-width: 768px) {
+  :root {
+    --space-m: 24px;
+    --font-body-default: 14px;
+    --grid-columns: 8;        /* legal: structural */
+  }
+}

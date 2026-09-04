@@ -1,0 +1,104 @@
+{
+  "skill": "fluid-responsive",
+  "description": "Trigger and behaviour evals. Trigger cases assert the skill is selected; behaviour cases assert it does the right thing once selected.",
+
+  "trigger": {
+    "should_trigger": [
+      "make this page responsive",
+      "build the mobile version of this screen",
+      "scale this mobile design up to desktop",
+      "set up a fluid type scale for this project",
+      "add design tokens using Utopia",
+      "audit our breakpoints",
+      "our text is tiny on mobile, can you fix the scale",
+      "turn this Figma desktop frame into a responsive layout",
+      "why does this table look broken at 768px",
+      "we have a 390 and a 1440 frame, wire up the tokens",
+      "add clamp() based spacing",
+      "check our contrast is accessible at mobile sizes",
+      "this column is supposed to be 44px but it renders wider"
+    ],
+    "should_not_trigger": [
+      "write a React component for a dropdown",
+      "fix this TypeScript error",
+      "what is the difference between rem and em",
+      "deploy the site to Vercel",
+      "add a dark mode toggle",
+      "write unit tests for the cart reducer"
+    ]
+  },
+
+  "behaviour": [
+    {
+      "name": "detects before asking",
+      "given": "a project that already contains a fluid-tokens.css",
+      "expect": [
+        "runs scripts/detect.mjs before asking any question",
+        "reports the recovered anchors rather than asking what they are",
+        "presents remaining questions with detected defaults"
+      ]
+    },
+    {
+      "name": "labels a derived anchor",
+      "given": "only a desktop Figma frame exists",
+      "expect": [
+        "states explicitly that the mobile anchor is derived, not measured",
+        "presents the derived values as proposals for a designer to confirm",
+        "does not present derived numbers as though they came from a design"
+      ]
+    },
+    {
+      "name": "reads both frames when both exist",
+      "given": "both a 390px and a 1440px Figma frame",
+      "expect": [
+        "reads real values from both frames",
+        "does not invent or round either end",
+        "runs sweep.mjs afterwards to check for band collisions"
+      ]
+    },
+    {
+      "name": "asks the nav content question",
+      "given": "a desktop design with a sidebar, deriving mobile",
+      "expect": [
+        "asks whether the mobile nav is the same list as desktop",
+        "treats promotion/demotion as a product decision, not a layout one"
+      ]
+    },
+    {
+      "name": "refuses to clamp a floor",
+      "given": "a request to make tap targets scale with the viewport",
+      "expect": [
+        "declines to put the tap target inside a clamp()",
+        "explains that a clamped 44px target is under 44px at every width below the top anchor",
+        "offers min-height plus fluid padding instead"
+      ]
+    },
+    {
+      "name": "judges contrast at the minimum anchor",
+      "given": "a token running 16px to 18px on a mid-grey",
+      "expect": [
+        "requires 4.5:1, not 3:1",
+        "names it as a fluid trap",
+        "does not use the desktop size to pick the threshold"
+      ]
+    },
+    {
+      "name": "requires a question per breakpoint",
+      "given": "a request to add a breakpoint at 640px",
+      "expect": [
+        "asks what question the breakpoint answers",
+        "suggests a clamp() if the value is scalar",
+        "adds it to the profile registry if genuinely structural"
+      ]
+    },
+    {
+      "name": "validates after generating",
+      "given": "any token generation",
+      "expect": [
+        "runs sweep.mjs and contrast.mjs after generate.mjs",
+        "reports failures verbatim rather than paraphrasing",
+        "fixes the profile and regenerates rather than editing generated CSS"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "id": "default",
+  "name": "Default — general purpose",
+  "description": "Sane starting point for a new project. 320px device floor so small Androids and the iPhone SE are covered, 16px body so nobody has to pinch-zoom.",
+
+  "rootFontSize": 16,
+  "anchors": { "min": 320, "max": 1440 },
+  "sweep": { "from": 320, "to": 2560, "step": 2 },
+
+  "type": {
+    "globalBounds": { "min": 12, "max": 64 },
+    "minStepSeparation": 2,
+    "advisoryMinSize": 14,
+    "advisoryNote": "Tokens whose value at the min anchor falls below this are flagged as hard to read on a phone.",
+
+    "scale": {
+      "--font-body-small": { "pair": [13, 14], "use": "captions, labels, helper text, timestamps" },
+      "--font-body-default": { "pair": [16, 18], "use": "all paragraph copy, descriptions, UI text" },
+      "--font-subtitle-small": { "pair": [18, 21], "use": "card titles, nav items" },
+      "--font-subtitle-default": { "pair": [21, 25], "use": "section labels, modal headings" },
+      "--font-subtitle-large": { "pair": [25, 31], "use": "feature headings, page sub-sections" },
+      "--font-title-small": { "pair": [28, 39], "use": "page titles, hero sub-headings" },
+      "--font-title-default": { "pair": [32, 49], "use": "hero headings, primary page titles" }
+    },
+
+    "bands": {
+      "caption": { "min": 13, "max": 14, "tokens": ["--font-body-small"] },
+      "body": { "min": 16, "max": 18, "tokens": ["--font-body-default"] },
+      "subtitle": {
+        "min": 18,
+        "max": 32,
+        "tokens": ["--font-subtitle-small", "--font-subtitle-default", "--font-subtitle-large"]
+      },
+      "title": { "min": 28, "max": 56, "tokens": ["--font-title-small", "--font-title-default"] }
+    },
+
+    "scaleOrder": [
+      "--font-body-small",
+      "--font-body-default",
+      "--font-subtitle-small",
+      "--font-subtitle-default",
+      "--font-subtitle-large",
+      "--font-title-small",
+      "--font-title-default"
+    ],
+
+    "leading": { "--leading-tight": 1.2, "--leading-body": 1.5 },
+    "tracking": { "--tracking-body": "0", "--tracking-title": "-0.015em" }
+  },
+
+  "space": {
+    "gridPt": 4,
+    "scale": {
+      "--space-3xs": { "pair": [4, 4], "use": "icon-to-label, tight inline gaps" },
+      "--space-2xs": { "pair": [4, 8], "use": "chip padding, dense metadata" },
+      "--space-xs": { "pair": [8, 12], "use": "label-to-field, badge padding" },
+      "--space-s": { "pair": [12, 16], "use": "list item block padding, stacked text" },
+      "--space-m": { "pair": [16, 24], "use": "card padding, grid gutter" },
+      "--space-l": { "pair": [24, 32], "use": "between content zones" },
+      "--space-xl": { "pair": [32, 48], "use": "section block padding" },
+      "--space-2xl": { "pair": [48, 64], "use": "between major page sections" },
+      "--space-3xl": { "pair": [64, 96], "use": "hero block, page-level breathing room" },
+      "--space-page-margin": { "pair": [16, 80], "use": "page horizontal margin (custom pair)" }
+    },
+    "tokens": [
+      "--space-3xs",
+      "--space-2xs",
+      "--space-xs",
+      "--space-s",
+      "--space-m",
+      "--space-l",
+      "--space-xl",
+      "--space-2xl",
+      "--space-3xl",
+      "--space-page-margin"
+    ],
+    "semantic": {
+      "--pad-card": { "ref": "--space-m", "use": "card padding" },
+      "--pad-section-block": { "ref": "--space-xl", "use": "section top/bottom" },
+      "--pad-list-item-block": { "ref": "--space-s", "use": "list item top/bottom" },
+      "--pad-list-item-inline": { "ref": "--space-m", "use": "list item left/right" },
+      "--gap-zone": { "ref": "--space-l", "use": "between zones" }
+    }
+  },
+
+  "static": {
+    "tapTargetMin": 44,
+    "clickTargetMin": 24,
+    "interactiveGapMin": 8,
+    "focusRingWidth": 2,
+    "focusRingOffset": 2,
+    "buttonPadding": {
+      "sm": { "block": 8, "inline": 12 },
+      "md": { "block": 12, "inline": 16 },
+      "lg": { "block": 16, "inline": 24 }
+    },
+    "neverClamp": [
+      "--tap-target-min",
+      "--click-target-min",
+      "--interactive-gap-min",
+      "--focus-ring-width",
+      "--focus-ring-offset",
+      "--pad-btn-"
+    ]
+  },
+
+  "structural": {
+    "allowedMediaQueryProps": ["--grid-columns"],
+    "gutterRef": "--space-m",
+    "columnSteps": [
+      { "minWidth": 0, "columns": 4 },
+      { "minWidth": 768, "columns": 8 },
+      { "minWidth": 1200, "columns": 12 }
+    ],
+    "navPattern": { "desktop": "inline-nav", "mobile": "hamburger-drawer" },
+    "tableStrategy": "card-list",
+    "truncation": "none",
+    "measure": { "desktopCh": 75, "mobileCh": 45 }
+  },
+
+  "color": {
+    "note": "Fill tokens with hex values and declare pairings to enable contrast.mjs.",
+    "tokens": {},
+    "pairings": []
+  },
+
+  "output": {
+    "format": "css",
+    "prefix": "",
+    "containerMaxWidth": 1440,
+    "figmaModes": ["Mobile", "Desktop"]
+  }
+}

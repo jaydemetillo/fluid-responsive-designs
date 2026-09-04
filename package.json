@@ -1,0 +1,34 @@
+{
+  "name": "fluid-responsive-designs",
+  "version": "0.1.0",
+  "description": "The layer Utopia leaves out: elicitation, structural doctrine and executable checks for fluid responsive design systems.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaydemetillo/fluid-responsive-designs.git"
+  },
+  "scripts": {
+    "sweep": "node scripts/sweep.mjs",
+    "contrast": "node scripts/contrast.mjs",
+    "audit": "node scripts/audit.mjs",
+    "generate": "node scripts/generate.mjs",
+    "test": "node test/run.mjs"
+  },
+  "optionalDependencies": {
+    "utopia-core": "^1.3.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "utopia",
+    "fluid-typography",
+    "responsive",
+    "design-system",
+    "clamp",
+    "wcag",
+    "accessibility",
+    "claude-skill"
+  ]
+}

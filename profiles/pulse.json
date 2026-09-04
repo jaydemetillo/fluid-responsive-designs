@@ -1,0 +1,171 @@
+{
+  "id": "pulse",
+  "name": "Pulse — Desktop → Mobile",
+  "description": "The scale read out of the two Pulse Figma frames (390px and 1440px). These numbers were not invented: each pair is the real value from each frame, which is why design and build cannot drift apart at the two widths anyone reviews.",
+
+  "notes": {
+    "gridPt": "Set to 2, not 4. Pulse's real frame values include 14px card padding and 10px small print, which are off a 4pt grid. Recording the deviation here rather than silently rounding it — worth a team decision, see the open questions.",
+    "breakpointDiscipline": "Every entry in structural.breakpoints must answer a question in plain words. Two breakpoints that answer different questions must not share a width just because they currently coincide — tying 'room for a sidebar' to 'room for a sentence' left the name column absorbing 400px of dead space at 899px."
+  },
+
+  "rootFontSize": 16,
+  "anchors": { "min": 390, "max": 1440 },
+  "sweep": { "from": 320, "to": 2560, "step": 2 },
+
+  "type": {
+    "globalBounds": { "min": 10, "max": 32 },
+    "minStepSeparation": 2,
+    "advisoryMinSize": 12,
+    "advisoryNote": "10px small print is legible on a desk and marginal on a phone at arm's length.",
+
+    "scale": {
+      "--font-small-print": { "pair": [10, 12], "use": "metadata, timestamps, small print" },
+      "--font-body": { "pair": [12, 14], "use": "body text and table cells" },
+      "--font-card-heading": { "pair": [14, 16], "use": "card headings" },
+      "--font-screen-title": { "pair": [20, 32], "use": "screen title (Sengkang General Hospital)" },
+      "--font-page-title": { "pair": [24, 32], "use": "page title (Good morning, Aisha)" }
+    },
+
+    "bands": {
+      "small": { "min": 10, "max": 12, "tokens": ["--font-small-print"] },
+      "body": { "min": 12, "max": 14, "tokens": ["--font-body"] },
+      "heading": { "min": 14, "max": 16, "tokens": ["--font-card-heading"] },
+      "title": { "min": 20, "max": 32, "tokens": ["--font-screen-title", "--font-page-title"] }
+    },
+
+    "scaleOrder": [
+      "--font-small-print",
+      "--font-body",
+      "--font-card-heading",
+      "--font-screen-title",
+      "--font-page-title"
+    ],
+
+    "leading": { "--leading-tight": 1.3, "--leading-body": 1.5 },
+    "tracking": { "--tracking-body": "0", "--tracking-title": "-0.015em" }
+  },
+
+  "space": {
+    "gridPt": 2,
+    "scale": {
+      "--space-page-margin": { "pair": [16, 32], "use": "page side margin" },
+      "--pad-card-raw": { "pair": [14, 16], "use": "card padding" },
+      "--size-row-height": { "pair": [52, 60], "use": "table row height" },
+      "--size-thumb-w": { "pair": [32, 60], "use": "product thumbnail width" },
+      "--size-thumb-h": { "pair": [20, 36], "use": "product thumbnail height" },
+      "--size-table-width": { "pair": [520, 1136], "use": "table total width" },
+      "--size-pinned-col": { "pair": [136, 236], "use": "pinned item-name column — ABSOLUTE, never a percentage" }
+    },
+    "tokens": [
+      "--space-page-margin",
+      "--pad-card-raw",
+      "--size-row-height",
+      "--size-thumb-w",
+      "--size-thumb-h",
+      "--size-table-width",
+      "--size-pinned-col"
+    ],
+    "semantic": {
+      "--pad-card": { "ref": "--pad-card-raw", "use": "card padding" }
+    }
+  },
+
+  "static": {
+    "tapTargetMin": 44,
+    "clickTargetMin": 24,
+    "interactiveGapMin": 8,
+    "focusRingWidth": 2,
+    "focusRingOffset": 2,
+    "buttonLabelSize": 14,
+    "buttonLabelNote": "Static at every width. Shrinking the words on a button is how a control becomes unusable.",
+    "buttonPadding": {
+      "sm": { "block": 8, "inline": 12 },
+      "md": { "block": 12, "inline": 16 },
+      "lg": { "block": 16, "inline": 24 }
+    },
+    "neverClamp": [
+      "--tap-target-min",
+      "--click-target-min",
+      "--interactive-gap-min",
+      "--focus-ring-width",
+      "--focus-ring-offset",
+      "--font-button-label",
+      "--radius-",
+      "--border-",
+      "--pad-btn-"
+    ]
+  },
+
+  "structural": {
+    "allowedMediaQueryProps": ["--grid-columns"],
+    "gutterRef": "--space-page-margin",
+    "columnSteps": [
+      { "minWidth": 0, "columns": 4 },
+      { "minWidth": 768, "columns": 8 },
+      { "minWidth": 1200, "columns": 12 }
+    ],
+
+    "breakpoints": [
+      { "width": 700, "question": "Is there room for a sentence of description?", "controls": "description column visibility" },
+      { "width": 900, "question": "Is there room for a sidebar?", "controls": "sidebar vs bottom tab bar" },
+      { "width": 900, "question": "Should the page header, search and tabs collapse into one sticky bar?", "controls": "sticky header composition" },
+      { "width": 900, "question": "Numbered pages, or '1 of 10' with a progress bar?", "controls": "pagination pattern" },
+      { "width": 1200, "question": "Is there room for a second column beside the main one?", "controls": "dashboard rail" },
+      { "width": 1200, "question": "Is there a rail the carousel must not overlap?", "controls": "carousel edge-to-edge breakout" }
+    ],
+
+    "navPattern": {
+      "desktop": "fixed sidebar, left",
+      "mobile": "floating pill tab bar, bottom",
+      "contentDiffers": true,
+      "promoted": ["Withdraw"],
+      "demoted": ["Guide", "Admin tools"],
+      "note": "The phone tab bar is NOT the same list as the sidebar. Phones get the five things people do daily. This is a content decision, not a layout one."
+    },
+
+    "tableStrategy": "pinned-column-with-horizontal-scroll",
+    "tableRules": {
+      "exactlyOneStretchyColumn": true,
+      "stretchyAbove700": "description",
+      "stretchyBelow700": "item-name",
+      "pinnedColumnAbsolute": true,
+      "dropOrder": ["description"],
+      "truncateOn": "block-level wrapper inside every cell, headers included"
+    },
+
+    "domOrder": "phone-first",
+    "domOrderNote": "Write the HTML in phone order so screen readers and the tab key follow it. Let CSS move the rail into its own column on desktop without reordering anything.",
+
+    "measure": { "desktopCh": 75, "mobileCh": 45 }
+  },
+
+  "measure": {
+    "widths": [390, 480, 500, 600, 699, 700, 768, 899, 900, 1024, 1200, 1440],
+    "tolerancePx": 0.5,
+    "noPageHScroll": true,
+    "selectorNote": "SELECTORS BELOW ARE PLACEHOLDERS. Replace them with the real ones from the Pulse DOM before trusting a green run — a passing measure with wrong selectors proves nothing.",
+    "fixedWidths": [
+      { "selector": "th.col-select", "expected": 44, "why": "The 44px checkbox column measured 52.8px at 768px. CSS table layout shares leftover space across every column unless exactly one column volunteers to absorb it." }
+    ],
+    "fluidWidths": [
+      { "selector": "table.inventory", "pair": [520, 1136] }
+    ],
+    "noWrap": [".cell-text", "th .cell-text"],
+    "truncates": [".cell-text", "th .cell-text"],
+    "noOverlap": ["thead th"],
+    "monotonicText": [".small-print", ".body-text", ".card-heading", ".page-title"]
+  },
+
+  "color": {
+    "note": "Fill from the Pulse token set to enable contrast.mjs. Remember: judge every size at 390px.",
+    "tokens": {},
+    "pairings": []
+  },
+
+  "output": {
+    "format": "css",
+    "prefix": "",
+    "containerMaxWidth": 1440,
+    "figmaModes": ["Mobile", "Desktop"]
+  }
+}

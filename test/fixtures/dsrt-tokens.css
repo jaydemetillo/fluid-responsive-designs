@@ -1,0 +1,153 @@
+/* ==========================================================================
+   Fluid Tokens — Design System Request Test
+   Method: Utopia (https://utopia.fyi) — fluid type + space via clamp()
+   Anchors: 390px (mobile) → 1440px (desktop). Root font size assumed 16px.
+
+   Every clamp() below resolves EXACTLY to the design system's mandated value
+   at each anchor. Verify: min endpoint at 390px, max endpoint at 1440px.
+
+   Formula used for every token:
+     slope_vw = (max_px - min_px) / (1440 - 390) * 100
+     base_rem = (min_px - (max_px - min_px) / (1440 - 390) * 390) / 16
+     value    = clamp(min_rem, base_rem + slope_vw, max_rem)
+   ========================================================================== */
+
+:root {
+  /* ---------------------------------------------------------------------
+     TYPE — each role scales only WITHIN its mandated band.
+     Band ceilings are hard: nothing renders below 8px or above 32px at
+     ANY viewport width, because clamp() bounds both ends.
+     --------------------------------------------------------------------- */
+
+  /* Body/Small — 8px → 10px | captions, labels, helper text, timestamps */
+  --font-body-small: clamp(0.5rem, 0.4536rem + 0.1905vw, 0.625rem);
+
+  /* Body/Default — 12px → 14px | all paragraph copy, descriptions, UI text */
+  --font-body-default: clamp(0.75rem, 0.7036rem + 0.1905vw, 0.875rem);
+
+  /* Subtitle/Small — 16px → 18px | card titles, nav items */
+  --font-subtitle-small: clamp(1rem, 0.9536rem + 0.1905vw, 1.125rem);
+
+  /* Subtitle/Default — 18px → 21px | section labels, modal headings */
+  --font-subtitle-default: clamp(1.125rem, 1.0554rem + 0.2857vw, 1.3125rem);
+
+  /* Subtitle/Large — 20px → 24px | feature headings, page sub-sections */
+  --font-subtitle-large: clamp(1.25rem, 1.1571rem + 0.381vw, 1.5rem);
+
+  /* Title/Small — 28px → 30px | page titles, hero sub-headings */
+  --font-title-small: clamp(1.75rem, 1.7036rem + 0.1905vw, 1.875rem);
+
+  /* Title/Default — 28px → 32px | hero headings, primary page titles */
+  --font-title-default: clamp(1.75rem, 1.6571rem + 0.381vw, 2rem);
+
+  /* Line height — UNITLESS so it scales with the fluid font size for free.
+     Never set a px line-height on fluid text. */
+  --leading-tight: 1.4;  /* titles + subtitles */
+  --leading-body: 1.5;   /* body copy */
+
+  /* Letter spacing — em-based so optical tightening tracks the fluid size */
+  --tracking-body: 0;
+  --tracking-title: -0.015em;  /* ≈ -0.42px at 28px, -0.48px at 32px */
+
+  /* ---------------------------------------------------------------------
+     SPACE — t-shirt ladder. Both endpoints land on the 4pt grid.
+     --------------------------------------------------------------------- */
+
+  --space-3xs: 0.25rem;                                              /*  4 →  4 */
+  --space-2xs: clamp(0.25rem, 0.1571rem + 0.381vw, 0.5rem);          /*  4 →  8 */
+  --space-xs:  clamp(0.5rem,  0.4071rem + 0.381vw, 0.75rem);         /*  8 → 12 */
+  --space-s:   clamp(0.75rem, 0.6571rem + 0.381vw, 1rem);            /* 12 → 16 */
+  --space-m:   clamp(1rem,    0.8143rem + 0.7619vw, 1.5rem);         /* 16 → 24 */
+  --space-l:   clamp(1.5rem,  1.3143rem + 0.7619vw, 2rem);           /* 24 → 32 */
+  --space-xl:  clamp(2rem,    1.6286rem + 1.5238vw, 3rem);           /* 32 → 48 */
+  --space-2xl: clamp(3rem,    2.6286rem + 1.5238vw, 4rem);           /* 48 → 64 */
+  --space-3xl: clamp(4rem,    3.2571rem + 3.0476vw, 6rem);           /* 64 → 96 */
+
+  /* Custom pair (Utopia "custom pairs") — the page gutter travels much
+     further than any ladder step, so it gets its own token. 16 → 80 */
+  --space-page-margin: clamp(1rem, -0.4857rem + 6.0952vw, 5rem);
+
+  /* ---------------------------------------------------------------------
+     SEMANTIC SPACE — maps the design system's stated pairs onto the ladder.
+     Use these in components, not the raw ladder, so intent is legible.
+     --------------------------------------------------------------------- */
+
+  --pad-card: var(--space-m);              /* 16 → 24  (card padding)      */
+  --pad-section-block: var(--space-xl);    /* 32 → 48  (section top/bottom)*/
+  --pad-list-item-block: var(--space-s);   /* 12 → 16                      */
+  --pad-list-item-inline: var(--space-m);  /* 16 → 24                      */
+  --gap-zone: var(--space-l);              /* 24 → 32  (between zones)     */
+
+  /* Button padding — STATIC. Buttons are hit targets, not layout; fluid
+     padding fights the 44px tap-target floor. Keep these fixed. */
+  --pad-btn-sm-block: 0.5rem;    --pad-btn-sm-inline: 0.75rem;   /*  8 / 12 */
+  --pad-btn-md-block: 0.75rem;   --pad-btn-md-inline: 1rem;      /* 12 / 16 */
+  --pad-btn-lg-block: 1rem;      --pad-btn-lg-inline: 1.5rem;    /* 16 / 24 */
+
+  /* ---------------------------------------------------------------------
+     GRID — gutter and margin are fluid; COLUMN COUNT IS NOT.
+     Column count is a structural decision and stays on breakpoints.
+     --------------------------------------------------------------------- */
+
+  --grid-gutter: var(--space-m);           /* 16 → 24 */
+  --grid-columns: 4;                       /* mobile default */
+
+  /* ---------------------------------------------------------------------
+     ACCESSIBILITY FLOORS — never fluid, never clamped down.
+     --------------------------------------------------------------------- */
+
+  --tap-target-min: 44px;      /* mobile — WCAG 2.5.5 + Apple HIG */
+  --click-target-min: 24px;    /* desktop pointer */
+  --interactive-gap-min: 8px;  /* minimum gap between interactive elements */
+  --focus-ring-width: 2px;     /* static — a fluid focus ring is a bug */
+  --focus-ring-offset: 2px;
+}
+
+/* Column count is the only thing that still needs breakpoints. */
+@media (min-width: 768px)  { :root { --grid-columns: 8;  } }
+@media (min-width: 1200px) { :root { --grid-columns: 12; } }
+
+/* ==========================================================================
+   USAGE
+   ========================================================================== */
+
+.page {
+  padding-inline: var(--space-page-margin);
+  max-width: 1440px;
+  margin-inline: auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+  gap: var(--grid-gutter);
+}
+
+/* Measure: cap prose in ch so line length tracks the font size.
+   Do NOT clamp() a ch value — ch is already relative to the fluid
+   font-size, and nesting the two makes the result unpredictable. */
+.prose {
+  font-size: var(--font-body-default);
+  line-height: var(--leading-body);
+  max-width: 75ch;
+}
+
+.card {
+  padding: var(--pad-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-border-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Product/listing grid — auto-fit is the one place a fluid COLUMN COUNT is
+   legitimate, because the track floor guarantees the card never squashes. */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--grid-gutter);
+}

@@ -1,0 +1,52 @@
+{
+  "id": "fluid-trap-fixture",
+  "name": "Fixture — the 18px fluid trap",
+  "description": "Deliberately rigged so --font-subtitle-small (16→18px) sits on a grey that clears 3:1 but not 4.5:1. Judged at the desktop anchor it passes as large text; judged correctly at the mobile anchor it fails. This is the bug the doctrine exists to catch.",
+
+  "rootFontSize": 16,
+  "anchors": { "min": 390, "max": 1440 },
+  "sweep": { "from": 320, "to": 2560, "step": 2 },
+
+  "type": {
+    "globalBounds": { "min": 8, "max": 32 },
+    "minStepSeparation": 2,
+    "advisoryMinSize": 12,
+    "bands": {},
+    "scaleOrder": []
+  },
+
+  "color": {
+    "tokens": {
+      "surface/default": "#FFFFFF",
+      "text/primary": "#1A1A1A",
+      "text/secondary": "#8F8F8F",
+      "border/focus": "#B4B4B4"
+    },
+    "pairings": [
+      {
+        "text": "--font-subtitle-small",
+        "fg": "text/secondary",
+        "bg": "surface/default",
+        "weight": "regular"
+      },
+      {
+        "text": "--font-body-default",
+        "fg": "text/primary",
+        "bg": "surface/default",
+        "weight": "regular"
+      },
+      {
+        "text": "--font-subtitle-default",
+        "fg": "text/secondary",
+        "bg": "surface/default",
+        "weight": "regular"
+      },
+      {
+        "type": "ui",
+        "name": "focus ring",
+        "fg": "border/focus",
+        "bg": "surface/default"
+      }
+    ]
+  }
+}
