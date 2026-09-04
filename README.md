@@ -185,16 +185,22 @@ assertions. It is the single source of truth; the scripts only read it.
 
 ---
 
-## Using it as a Claude skill
+## Using it with your AI tool
 
-`SKILL.md` is the agent entry point. Symlink or copy the repo into your skills
-directory:
+Same rules, three wrappers. Full steps in [`INSTALL.md`](INSTALL.md).
 
-```bash
-ln -s "$PWD" ~/.claude/skills/fluid-responsive
-```
+| Tool | File it reads | Setup |
+|---|---|---|
+| **Claude Code** | `SKILL.md` | `ln -s "$PWD" ~/.claude/skills/fluid-responsive` |
+| **Codex** | `AGENTS.md` | copy `AGENTS.md` into your project root |
+| **Cursor** | `.cursor/rules/fluid-responsive.mdc` | copy into your project's `.cursor/rules/` |
 
-It builds first and asks second. Questions are reserved for the three cases a
+In Claude Code it becomes the **Fluid Responsive** skill (`/fluid-responsive`),
+and triggers on its own from phrases like "make this responsive" or "build the
+mobile version". In Cursor the rule attaches automatically when you touch CSS,
+SCSS, Tailwind config or token files.
+
+All three build first and ask second. Questions are reserved for the cases a
 tool genuinely cannot settle — a product decision (is the mobile nav the same
 list as desktop?), a choice that reshapes the DOM (does a table become cards?),
 or a real conflict between sources. Everything else gets a sensible default and
@@ -206,7 +212,10 @@ question is to answer.
 ## Repository layout
 
 ```
-SKILL.md                  agent entry point — modes, elicitation flow
+SKILL.md                  Claude Code skill entry point
+AGENTS.md                 Codex (and any agent that reads AGENTS.md)
+.cursor/rules/            Cursor rule
+INSTALL.md                setup for all three
 profiles/                 the source of truth: anchors, pairs, floors, registry
 references/               doctrine, elicitation bank, tables, patterns, gotchas, Figma
 scripts/

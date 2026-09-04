@@ -1,6 +1,5 @@
 # 🔧 Fluid Responsive: the tooling
 
-**Draft — for review before publishing to Notion.**
 Companion to [🌊 Fluid Responsive: Desktop → Mobile (Pulse)](https://app.notion.com/p/opengov/Fluid-Responsive-Desktop-Mobile-Pulse-3d077dbba788812b9c35ca76421a270d).
 Repo: [github.com/jaydemetillo/fluid-responsive-designs](https://github.com/jaydemetillo/fluid-responsive-designs)
 
@@ -11,16 +10,16 @@ Repo: [github.com/jaydemetillo/fluid-responsive-designs](https://github.com/jayd
 The Pulse document wrote down the rules we had to invent to get two screens from
 1440px to 390px. This is those rules turned into **software that checks them**.
 
-It is a Claude skill plus a small toolkit. The skill asks the structural
-questions before generating anything; the toolkit proves the result with four
-scripts that exit non-zero in CI.
+A Claude skill plus four scripts. The skill builds first and asks second; the
+scripts prove the result and exit non-zero in CI.
 
-The Pulse doc ends with the line that motivated all of this:
+The Pulse doc ends on the line that motivated all of it:
 
 > Fluid design needs measurement, because its failures are a few pixels wide and
 > invisible in review.
 
-Everything here follows from taking that seriously.
+Everything here follows from taking that seriously — including, as it turned
+out, catching the same class of bug in our own build.
 
 ---
 
@@ -29,18 +28,14 @@ Everything here follows from taking that seriously.
 The Utopia ecosystem is five implementations of one calculation: given two
 viewport anchors, interpolate type and space with `clamp()`.
 
-**None of them asks a single question.** Not the website calculators, not
-`utopia-core`, not the SCSS port, not the PostCSS plugin, not the Tailwind
-plugin. That is deliberate — Utopia's thesis is that once the anchors are fixed,
-there is nothing left to decide.
+**None of them asks a single question.** Not the calculators, not `utopia-core`,
+not the SCSS port, not the PostCSS plugin, not the Tailwind plugin. That is
+deliberate — Utopia's thesis is that once the anchors are fixed there is nothing
+left to decide.
 
-That thesis is true **for scalars**, and silent on everything else:
-
-- What happens to the navigation at 830px?
-- Does a six-column table become a card list, or scroll sideways?
-- What does the mobile header contain when desktop has title + search + filter + tabs?
-- Does a 44px tap target survive being clamped? (No.)
-- Is the mobile nav even the same list as desktop? (Usually not.)
+That thesis is true **for scalars**, and silent on everything else: what happens
+to the navigation at 830px, whether a six-column table becomes a card list, what
+the mobile header contains, whether a 44px tap target survives being clamped.
 
 And none of them can tell you your fixed 44px column is rendering at 52.8px.
 
@@ -48,9 +43,9 @@ And none of them can tell you your fixed 44px column is rendering at 52.8px.
 
 ## The one idea underneath it
 
-Everything derives from a three-way split. The Pulse doc had two buckets —
-things that flow, things that are frozen. Working through the table pushed out a
-third, and it's where every unanswered question lives.
+The Pulse doc had two buckets — things that flow, things that are frozen.
+Working through the table pushed out a third, and it is where every unanswered
+question lives.
 
 | | **Scalar** | **Structural** | **Static** |
 |---|---|---|---|
@@ -59,20 +54,20 @@ third, and it's where every unanswered question lives.
 | Media query? | never | **yes — this is what they're for** | never |
 | Inside a `clamp()`? | always | never | **never** |
 
-The useful part is the **structural** column. Those values have no sensible
-in-between state — there is no defensible answer at 830px between "sidebar" and
-"tab bar" — so they must step, and a query is the correct tool. Utopia has
-nothing to say about them, which is why so many Utopia projects have a beautiful
-type scale and an incoherent tablet layout.
+The useful column is **structural**. Those values have no sensible in-between
+state — there is no defensible answer at 830px between "sidebar" and "tab bar" —
+so they must step, and a query is the right tool. Utopia says nothing about
+them, which is why so many Utopia projects have a beautiful type scale and an
+incoherent tablet layout.
 
-This also settles the breakpoint argument. Breakpoints aren't banned;
-**unmotivated** ones are. The Pulse rule stands as written:
+This also settles the breakpoint argument. Breakpoints are not banned;
+**unmotivated** ones are. The Pulse rule stands exactly as written:
 
 > If a breakpoint can't answer a question in plain words, it shouldn't exist —
 > that's a value that should have been a clamp.
 
-The profile now keeps a registry of breakpoints with the question each answers,
-and the audit errors on any query width that isn't in it.
+Profiles now keep a registry of breakpoints with the question each answers, and
+the audit errors on any query width missing from it.
 
 ---
 
@@ -87,11 +82,8 @@ and the audit errors on any query width that isn't in it.
 
 ### `contrast` — the 18px trap, mechanised
 
-The Pulse doc calls this out in §3. WCAG's "large text" threshold is a fixed
-18px; our font sizes are not. A token running 16→18px earns the relaxed 3:1
-allowance at desktop and does not earn it at mobile.
-
-Here is the check on a rigged fixture. Same grey, opposite verdicts:
+§3 of the Pulse doc calls this out. WCAG's "large text" threshold is a fixed
+18px; our font sizes are not. Same grey, opposite verdicts:
 
 ```
 element                       @min    ratio   needs
@@ -100,113 +92,145 @@ element                       @min    ratio   needs
 ```
 
 Identical colour. One fails, one passes, purely because of where each token's
-*minimum* sits relative to 18px. This failure is invisible to eyeballs and to
-every colour tool on the market, because those tools ask you for a size and you
-naturally hand them the one you designed at.
+*minimum* sits relative to 18px. Invisible to eyeballs and to every colour tool
+on the market, because those tools ask you for a size and you hand them the one
+you designed at.
 
 ### `measure` — the 52.8px column
 
-The most valuable script, and the only one needing a browser. §5 Rule 1 of the
-Pulse doc describes the bug: a fixed 44px checkbox column measured 52.8px at
-768px, because CSS table layout redistributes leftover space across every column
-unless exactly one volunteers to absorb it.
+The only script needing a browser, and the most valuable. §5 Rule 1 of the Pulse
+doc describes the bug: a fixed 44px checkbox column measured 52.8px at 768px,
+because CSS table layout redistributes leftover space across every column unless
+exactly one volunteers to absorb it.
 
 Nothing in the CSS was wrong. The layout engine overruled the token. **No amount
-of stylesheet analysis finds that** — you have to measure the rendered page, at
-every width where something structural happens.
+of stylesheet analysis finds that.**
 
-This directly answers Open Question 1 in the Pulse doc ("should zero drift fail
-the build, or stay a guideline?"). It's now a script with an exit code, so it can
-be either — but it can finally be a test.
+This answers Open Question 1 ("should zero drift fail the build?"). It is now a
+script with an exit code, so it can finally be a test.
 
 ---
 
-## Two real findings, already
+## We put it through three real scenarios
 
-The checks found genuine collisions in **both** of our existing scales, without
-being told to look.
+Not a demo — three actual builds, each run end to end through the skill, with
+every token generated rather than hand-written.
 
-**1. The e-commerce design system.** `Title/Small` and `Title/Default` both
-render 28px at 390px and only separate at desktop (30 vs 32). Two roles that
-render identically are not two roles. This was documented by hand in a comment;
-it's now a failing test.
+| | Scenario | References |
+|---|---|---|
+| **S1** | Item Catalogue, desktop → mobile | one Figma frame |
+| **S2** | Station Dashboard, mobile → desktop | one Figma frame |
+| **S3** | A simple table | **none at all** |
 
-**2. Pulse itself.** From the numbers in §2 of the Pulse doc:
+All three pass `sweep`, `audit` and `measure`. Getting them there took four bug
+fixes, and **three of the bugs were in our own build** — found by the tooling,
+not by looking.
+
+### The one that matters most
+
+The pinned item-name column in S1 declared `170px` and rendered **195px at
+759px, 229px at 899px**.
+
+Six columns summing to 610px sat inside a 700px table. Nothing volunteered to
+absorb the 90px of slack, so CSS table layout shared it across all six.
+
+That is Rule 1 of the Pulse doc, violated in a build written by someone who had
+just finished writing Rule 1 down. The screenshot looked completely fine. Only
+the measurement caught it.
+
+**If you take one thing from this page, take that.** Writing the rule down is
+not the same as following it, and the only reliable difference is a script.
+
+### The other three
+
+**`flex-wrap: wrap` on a column container.** The expanded detail panel's photo
+block rendered 104px tall around a 171px child, spilling over the description.
+A column-direction flex container with `flex-wrap: wrap` wraps into *columns*,
+stacking them. Flipping `flex-direction` in a media query without also flipping
+`flex-wrap` is the trap.
+
+**Hiding a column that a `colspan` row still spans.** `display: none` on four
+`<th>` did not remove those columns, because the expanded row spans all six.
+Width went to columns nobody could see, and the pinned column measured **418px
+against a 170px token**. The fix was to stop hiding columns and let the table
+scroll with the first pinned — which is what the mobile frame was describing
+anyway. The frozen-panel look is an *outcome* of pinning, not a second layout.
+
+**The Pulse desktop type scale is too tightly packed for mobile.** Five type
+roles live inside 11–16px. Compressed to a 390px anchor they collapse onto each
+other. The tool refused to fudge it and printed a decision block with four
+options; we took "differentiate by weight", which the design already does.
+
+---
+
+## Three findings for the team
+
+**1. Pulse's two titles collide at desktop.** From §2 of the Pulse doc:
 
 | | 390px | 1440px |
 |---|---|---|
 | Screen title | 20px | **32px** |
 | Page title | 24px | **32px** |
 
-They collide at the desktop anchor. On a 1440px screen, "Sengkang General
-Hospital" and "Good morning, Aisha" are the same size — so the hierarchy that
-exists on the phone disappears on the desktop, which is the opposite of what you
-would expect.
+On a 1440px screen "Sengkang General Hospital" and "Good morning, Aisha" render
+at the same size, so the hierarchy that exists on the phone disappears on the
+desktop — the opposite of what you would expect. Separate them by size, or
+accept the collision and differentiate by weight.
 
-Worth a design decision: separate them by size, or accept the collision and
-differentiate by weight.
+**2. The type scale has no room underneath it.** Because body sits at the
+readability floor, a smaller "caption" role has nowhere to go. Worth deciding
+whether Pulse wants a caption role at all, or whether small text should be
+handled by weight and colour.
+
+**3. Card padding and small print are off the 4pt grid.** 14px card padding and
+10px small print. Recorded in the profile as a 2pt grid rather than silently
+rounded, but it is a real deviation worth a decision.
 
 ---
 
 ## The questions it asks
 
-The point of the skill is that it interrogates before generating. Two tiers,
-because mixing them is how these things get abandoned.
+The point of the skill is that it interrogates before generating — but sparingly.
 
-**Tier 0 — detect, don't ask.** It reads the codebase first and recovers the
-anchors *from the clamp maths itself* — an existing token file tells you its own
-anchors. Everything found becomes a proposed default, so the common path is
-confirmation, not data entry.
+**Detect, don't ask.** It reads the codebase first and recovers the anchors
+*from the clamp maths itself*. Everything found becomes a proposed default, so
+the common path is confirmation rather than data entry.
 
-**Tier 1 — project config**, asked once and written to a file: anchors and device
-floor, column steps, nav pattern, table strategy and drop order, accessibility
-floors, output format.
-
-**Tier 2 — per screen**, at most three questions, only for genuine ambiguity.
-Never re-asks Tier 1.
+**Build, then ask what building revealed.** The bar for a question is high: a
+product decision no tool can derive, a choice that reshapes the DOM, or a real
+conflict between sources. Everything else gets a sensible default and a one-line
+note saying what was assumed — cheaper to correct than a question is to answer.
 
 The question most often skipped and most worth asking is from §4 of the Pulse
 doc: **is the mobile nav the same list as desktop?** Usually not — Withdraw gets
 promoted into the tab bar, Guide and admin tools get demoted. That is a content
-decision, not a layout one, and no tool can derive it.
+decision, and no tool can derive it.
 
 ---
 
-## The scenarios it covers
+## Reference counts
 
-Two independent axes, because these get conflated:
+Two independent axes, because these get conflated. Where the design comes from
+(nothing / Figma / existing code), and **how many anchors actually exist**:
 
-**Where the design comes from:** nothing (greenfield) · a Figma design via MCP ·
-existing code.
+- **Both frames** — read both, invent nothing. This is why Pulse's design and
+  build cannot drift at the two widths anyone reviews.
+- **One frame** — derive the other end, and *say which numbers are derived*. A
+  derived anchor is a proposal, not a measurement. Presenting it as one throws
+  away the method's guarantee.
+- **None** — you still get working, validated tokens with zero input.
 
-**How many anchors actually exist:**
-
-- **Both frames exist** — read both, invent nothing. This is the good case, and
-  it's why Pulse's design and build can't drift at the two widths anyone reviews.
-- **Only one frame** — derive the other end, and *say explicitly which numbers
-  are derived*. A derived anchor is a proposal, not a measurement. Presenting it
-  as one throws away the whole guarantee of the method.
-
-Crossed with direction — desktop→mobile and mobile→desktop. Those are **not**
-mirror images. The characteristic mobile-first failure isn't small text, it's a
-45ch column stretched across 1440px with nothing beside it. Different bug,
-different questions.
+All three are proven end to end in the test suite, not just claimed.
 
 ---
 
 ## What it doesn't do
 
-Being straight about the edges:
-
-- `measure.mjs` needs real selectors from a real DOM. The Pulse profile ships
-  **placeholder selectors** — a green run against those proves nothing until
-  someone fills in the actual ones.
-- No colour values are in the repo. The e-commerce system forbids hardcoded hex,
-  so contrast checking stays off until someone supplies a palette.
-- Specificity bugs (§7 #4 in the Pulse doc — a general rule outranking a
-  column-specific one) have **no static check**. They're only caught by `measure`
-  noticing the consequence. That's an argument for measuring, not a gap that can
-  be closed by reading CSS.
+- Specificity bugs (§7 #4 in the Pulse doc) have **no static check**. They are
+  only caught by `measure` noticing the consequence. That is an argument for
+  measuring, not a gap that can be closed by reading CSS.
+- No colour values ship in the repo, so contrast checking stays off until
+  someone supplies a palette.
 - It does not decide `tableStrategy` for you. Scroll-sideways vs cards is a
   design call about whether people scan or read.
 
@@ -214,18 +238,17 @@ Being straight about the edges:
 
 ## Open questions this turns into decisions
 
-From §8 of the Pulse doc — these are now testable rather than debatable:
+From §8 of the Pulse doc — now testable rather than debatable:
 
-1. **Should zero drift fail the build?** `measure.mjs` exits non-zero. Wiring it
+1. **Should zero drift fail the build?** `measure` exits non-zero. Wiring it
    into CI is a one-line decision.
-2. **Do we adopt 390/1440 as the standard Pulse anchor pair?** If yes,
-   `profiles/pulse.json` becomes the shared profile for all Pulse work and every
-   screen inherits one scale.
+2. **Do we adopt 390/1440 as the standard Pulse anchor pair?** If yes, the pulse
+   profile becomes the shared one and every screen inherits one scale.
 3. **Column drop order as data rather than CSS rules?** Already modelled as data
    in the profile — it needs the actual order filled in.
-4. **Container queries?** The doc calls this the single biggest improvement
-   available, and it's now the recommended default for anything a *component*
-   decides about itself, with media queries reserved for page-level topology.
+4. **Container queries?** The doc calls this the biggest improvement available,
+   and it is now the recommended default for anything a *component* decides
+   about itself, with media queries reserved for page-level topology.
 
 Still genuinely undecided, and needing design rather than engineering: whether
 table rows become cards below ~560px, and whether column headers get authored
@@ -238,9 +261,9 @@ short forms instead of truncating.
 ```bash
 git clone https://github.com/jaydemetillo/fluid-responsive-designs.git
 cd fluid-responsive-designs
-node test/run.mjs
+node test/run.mjs                                    # 15 proofs, no install
+python3 -m http.server 4178 --directory examples     # the three scenarios
 ```
 
-Eight proofs, no install. Each one asserts that a specific validator catches the
-specific bug it exists to catch — a validator nobody has watched fail is a
-validator you can't trust.
+Every proof asserts that a specific validator catches the specific bug it exists
+to catch. A validator nobody has watched fail is a validator you cannot trust.

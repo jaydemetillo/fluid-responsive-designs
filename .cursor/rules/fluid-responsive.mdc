@@ -1,0 +1,57 @@
+---
+description: How to make designs work across phone and desktop widths. Apply when touching CSS, design tokens, responsive layout, breakpoints, tables, or anything sized in px/rem/clamp.
+globs: ["**/*.css", "**/*.scss", "**/*.sass", "**/*.less", "**/tokens*.json", "**/tailwind.config.*"]
+alwaysApply: false
+---
+
+# Fluid Responsive
+
+## Sort every value into one of three groups
+
+| Group | Plain English | Examples | How to write it |
+|---|---|---|---|
+| **Stretch** | grows smoothly with the window | font size, padding, gaps, page margin | `clamp()` — never a media query |
+| **Switch** | flips between fixed states | column count, nav pattern, table layout | a media or container query |
+| **Frozen** | never changes | tap targets, focus rings, button padding, radii | a plain number — never inside `clamp()` |
+
+The test for Switch: **is there a sensible value halfway between?** There is no
+sensible answer between "sidebar" and "bottom tab bar", so nav switches. There
+is one between 16px and 24px padding, so padding stretches.
+
+## Hard rules
+
+- Never hand-write a `clamp()`. Reference a token or regenerate from the profile.
+- Never put a tap target, focus ring, or button padding inside a `clamp()`. A
+  44px target that only reads 44px at desktop is under 44px everywhere below it.
+- Use `min-height`, never `height`, on anything tappable.
+- Judge colour contrast at a token's **mobile** size, not its desktop size. A
+  16→18px token needs 4.5:1, not the 3:1 it would earn at 1440px.
+- `line-height` unitless, `letter-spacing` in `em` — never px on fluid text.
+- `max-width: 75ch` bare. Never wrap `ch` in `clamp()`.
+- No breakpoint you cannot justify in a plain sentence.
+- Never edit generated token CSS. Edit the profile and regenerate.
+
+## Tables
+
+- **Exactly one stretchy column at every width.** Otherwise the browser shares
+  leftover space across all of them and a "fixed 44px" column renders at 52.8px.
+- A pinned column is an absolute size, never a percentage.
+- `text-overflow: ellipsis` does nothing on a `<td>` or on inline text. Put it on
+  a block-level wrapper inside the cell, with `overflow: hidden` and
+  `white-space: nowrap`.
+- Don't hide columns in a table that has a `colspan` row — the columns stay alive.
+
+## Workflow
+
+```bash
+node scripts/detect.mjs <dir>                                   # read before asking
+node scripts/init.mjs --refs refs.json --out .utopia            # 0, 1 or 2 design frames
+node scripts/generate.mjs --profile .utopia/profile.json --out tokens.css
+node scripts/sweep.mjs tokens.css --profile .utopia/profile.json
+node scripts/audit.mjs src/ --profile .utopia/profile.json
+```
+
+Build first with sensible defaults and state what you assumed. Ask only when
+it's a product decision, reshapes the DOM, or sources genuinely conflict.
+
+Full reasoning: `references/doctrine.md`, `references/tables.md`, `references/gotchas.md`.
