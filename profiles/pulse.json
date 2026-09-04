@@ -48,12 +48,12 @@
   "space": {
     "gridPt": 2,
     "scale": {
-      "--space-page-margin": { "pair": [16, 32], "use": "page side margin" },
+      "--space-page-margin": { "pair": [16, 32], "customPair": true, "use": "page side margin" },
       "--pad-card-raw": { "pair": [14, 16], "use": "card padding" },
       "--size-row-height": { "pair": [52, 60], "use": "table row height" },
       "--size-thumb-w": { "pair": [32, 60], "use": "product thumbnail width" },
       "--size-thumb-h": { "pair": [20, 36], "use": "product thumbnail height" },
-      "--size-table-width": { "pair": [520, 1136], "use": "table total width" },
+      "--size-table-width": { "pair": [520, 1136], "customPair": true, "use": "table total width" },
       "--size-pinned-col": { "pair": [136, 236], "use": "pinned item-name column — ABSOLUTE, never a percentage" }
     },
     "tokens": [

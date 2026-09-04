@@ -125,6 +125,89 @@ check('detect recovers 390→1440 from the clamps without being told', () => {
     : `did not recover the anchors:\n${r.out}`;
 });
 
+// ---- reference counts: a person must be able to start from 0, 1 or 2 -------
+import { mkdtempSync, writeFileSync, existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+
+function scenario(name, refs) {
+  const dir = mkdtempSync(join(tmpdir(), 'fr-'));
+  const args = ['--out', join(dir, '.utopia')];
+  if (refs) {
+    const rp = join(dir, 'refs.json');
+    writeFileSync(rp, JSON.stringify(refs));
+    args.unshift('--refs', rp);
+  }
+  const i = run(S('init.mjs'), args);
+  if (i.code !== 0) return { problem: `init failed: ${i.out}` };
+  const profile = join(dir, '.utopia', 'profile.json');
+  if (!existsSync(join(dir, '.utopia', 'responsive.json')))
+    return { problem: 'responsive.json was not written' };
+  const css = join(dir, 'tokens.css');
+  const g = run(S('generate.mjs'), ['--profile', profile, '--out', css]);
+  if (g.code !== 0) return { problem: `generate failed: ${g.out}` };
+  const s = run(S('sweep.mjs'), [css, '--profile', profile]);
+  return { initOut: i.out, sweepOut: s.out, sweepCode: s.code };
+}
+
+const DESKTOP = {
+  '--font-body-default': 14, '--font-title-default': 32,
+  '--font-subtitle-small': 18, '--space-m': 24, '--space-page-margin': 80,
+};
+const MOBILE = {
+  '--font-body-default': 12, '--font-title-default': 24,
+  '--font-subtitle-small': 16, '--space-m': 16, '--space-page-margin': 16,
+};
+
+check('ZERO references produces valid tokens with no input at all', () => {
+  const r = scenario('zero', null);
+  if (r.problem) return r.problem;
+  if (r.sweepCode !== 0) return `sweep reported errors:\n${r.sweepOut}`;
+  return null;
+});
+
+check('ONE reference derives the missing end and labels it a proposal', () => {
+  const r = scenario('one', { anchors: { min: 390, max: 1440 }, desktop: DESKTOP });
+  if (r.problem) return r.problem;
+  if (!/DERIVED/.test(r.initOut)) return 'nothing was labelled DERIVED';
+  if (!/PROPOSALS, not measurements/.test(r.initOut))
+    return 'did not warn that derived values are proposals';
+  // A token's own base ratio must beat the generic curve: page margin is a
+  // custom pair travelling 16->80, so its mobile end is 16, not ~48.
+  if (!/--space-page-margin\s+16 → 80/.test(r.initOut))
+    return `page margin derived wrongly — custom pair ratio not applied:\n${r.initOut}`;
+  return null;
+});
+
+check('TWO references read both ends and invent nothing', () => {
+  const r = scenario('two', { anchors: { min: 390, max: 1440 }, desktop: DESKTOP, mobile: MOBILE });
+  if (r.problem) return r.problem;
+  if (/DERIVED/.test(r.initOut)) return 'derived something despite having both ends';
+  if (!/READ\s+--space-page-margin\s+16 → 80/.test(r.initOut))
+    return 'did not read the referenced pair verbatim';
+  return null;
+});
+
+check('an unresolvable collision becomes a question, not a silent fudge', () => {
+  const r = scenario('two', { anchors: { min: 390, max: 1440 }, desktop: DESKTOP, mobile: MOBILE });
+  if (r.problem) return r.problem;
+  if (!/DECISIONS NEEDED/.test(r.initOut)) return 'did not surface the decision';
+  if (!/differentiate by WEIGHT/.test(r.initOut)) return 'did not offer real options';
+  return null;
+});
+
+check('generator refuses to paper over an inverted pair', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fr-inv-'));
+  const p = join(dir, 'bad.json');
+  writeFileSync(p, JSON.stringify({
+    id: 'bad', name: 'Inverted', rootFontSize: 16,
+    anchors: { min: 390, max: 1440 },
+    type: { scale: { '--font-oops': { pair: [24, 12], use: 'inverted' } } },
+  }));
+  const g = run(S('generate.mjs'), ['--profile', p, '--out', join(dir, 'x.css')]);
+  if (g.code === 0) return 'generated an inverted pair without complaint';
+  return /inverted token pair/.test(g.out) ? null : `wrong failure:\n${g.out}`;
+});
+
 // ---- report ---------------------------------------------------------------
 console.log('\n  fluid-responsive-designs — validator proofs\n');
 let failed = 0;

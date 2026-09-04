@@ -1,6 +1,6 @@
 ---
 name: fluid-responsive
-description: Make a design or codebase responsive using the Utopia fluid method, in either direction — desktop→mobile or mobile→desktop, from scratch, from a Figma design, or from existing code. Asks the structural questions Utopia leaves out (grid, navigation, tables, truncation, header composition, breakpoints) instead of assuming them, then proves the result with executable checks for scale integrity, WCAG contrast judged at the mobile anchor, doctrine violations, and rendered column drift. Use when asked to "make this responsive", "build the mobile version", "scale this design to desktop", "add a fluid type scale", "set up design tokens", "audit our breakpoints", or when Utopia, clamp(), fluid typography, or fluid spacing come up.
+description: Make a design or codebase responsive using the Utopia fluid method, in either direction — desktop→mobile or mobile→desktop, from scratch, from a Figma design, or from existing code, and with two reference frames, one, or none. Builds working tokens immediately from whatever references exist, labels anything it had to derive, then asks only the few questions a tool genuinely cannot answer. Validates with executable checks for scale integrity, WCAG contrast judged at the mobile anchor, doctrine violations, and rendered column drift. Use when asked to "make this responsive", "build the mobile version", "scale this design to desktop", "add a fluid type scale", "set up design tokens", "audit our breakpoints", or when Utopia, clamp(), fluid typography, or fluid spacing come up.
 ---
 
 # Fluid Responsive
@@ -8,107 +8,73 @@ description: Make a design or codebase responsive using the Utopia fluid method,
 Utopia answers *"what size is this at 830px?"* Nothing answers *"what happens to
 the navigation at 830px?"* This skill owns the second question.
 
-**Never invent token values, and never write a `clamp()` by hand.** Read the two
-anchors, run `generate.mjs`, then validate. The scripts are the source of truth;
-this file routes to them.
+**Build first. Ask only what building revealed.** Never hand-write a `clamp()`;
+never invent a token value silently. The scripts are the source of truth.
 
 ---
 
-## Step 1 — Detect before you ask
-
-Never ask what you can read.
+## Step 1 — Detect (no questions)
 
 ```bash
 node scripts/detect.mjs <project-dir>
 ```
 
-Recovers existing anchors from the `clamp()` maths itself, plus the token ladder,
+Recovers the anchors from the `clamp()` maths itself, plus the token ladder,
 static floors, breakpoints in use, and whether the code has tables, pinned
 columns, truncation, nav, auto-fit grids or container queries.
 
-Summarise it in one short paragraph, then use every finding as a **proposed
-default**. A skill that asks twelve questions with no defaults is a form, and
-forms get abandoned.
+Never ask anything this already answered.
 
 ---
 
-## Step 2 — Place the job on the grid
+## Step 2 — Build immediately
 
-Two independent axes. Both matter.
+Collect whatever references exist into a `refs.json` — **do not ask for the ones
+that don't exist**:
 
-### Where the design comes from
-
-| Source | What to do |
-|---|---|
-| **Nothing** (greenfield) | Start from `profiles/default.json`. Ask Tier 1 in full |
-| **Figma** (via Figma MCP) | `get_variable_defs` / `get_design_context` on each frame. Read real values — see `references/figma-bridge.md` |
-| **Existing code** | `detect.mjs` recovers the anchors; confirm rather than ask |
-
-### How many anchors actually exist
-
-| | What it means | The rule |
-|---|---|---|
-| **Both frames** | desktop *and* mobile designs exist | **Read both. Invent nothing.** Each pair is a real design value, so design and build cannot drift at the two widths anyone reviews |
-| **One frame only** | just desktop, or just mobile | Derive the missing end — and **say explicitly which numbers are derived**. A derived anchor is a proposal, not a measurement |
-
-That second row is the case people get wrong. Presenting a derived anchor as
-though it came from a design throws away the whole guarantee of the method.
-
-### Direction
-
-| Mode | When | What you decide |
-|---|---|---|
-| `derive-mobile` | desktop exists | what **collapses** — nav, table columns, truncation, header contents |
-| `derive-desktop` | mobile exists | what **expands** — measure cap, what fills the space, what to reveal |
-| `audit` | anything exists | nothing; run the validators |
-
-`derive-desktop` is not the mirror of `derive-mobile`. The characteristic
-mobile-first failure isn't small text — it's a 45ch column stretched across
-1440px with nothing beside it. Different bug, different questions.
-
----
-
-## Step 3 — Ask, in two tiers
-
-Load `references/elicitation.md` for the full bank with defaults.
-
-**Tier 1 — project config**, once, into `.utopia/responsive.json`. Use
-`AskUserQuestion`, ≤4 at a time, each with a detected default: anchors and device
-floor · column steps, nav pattern, table strategy, drop order · accessibility
-floors and contrast target · output format and Figma mode names.
-
-**Tier 2 — per artefact**, at generation time. ≤3 questions, only for ambiguity
-detection genuinely couldn't resolve. **Never re-ask Tier 1 here.**
-
-The question most often skipped and most worth asking: *is the mobile nav the
-same list as desktop?* Usually not — some items get promoted into the tab bar,
-admin tooling gets demoted. That is a product decision, not a layout one.
-
----
-
-## Step 4 — Generate
-
-```bash
-node scripts/generate.mjs --profile <profile.json> --out <tokens.css>
+```json
+{
+  "name": "My app",
+  "anchors": { "min": 390, "max": 1440 },
+  "desktop": { "--font-body-default": 14, "--space-m": 24 },
+  "mobile":  { "--font-body-default": 12 }
+}
 ```
 
-Profiles: `default.json` (generic, 320→1440), `ecommerce-dsrt.json` (dense
-consumer UI), `pulse.json` (worked example with a real table and breakpoint
-registry).
+From Figma, `get_variable_defs` on each frame fills these in. From existing code,
+`detect.mjs` does. From nothing, omit both keys.
 
-Edit the **profile**, never the generated CSS. Regenerating overwrites it.
+```bash
+node scripts/init.mjs --refs refs.json --out .utopia
+node scripts/generate.mjs --profile .utopia/profile.json --out tokens.css
+```
+
+`init.mjs` resolves every token by whatever evidence it has, and **labels each
+one**:
+
+| Label | Meaning |
+|---|---|
+| `READ` | both ends came from a design. Invent nothing here |
+| `DERIVED` | one end came from a design, the other is **a proposal** |
+| `SCALED` | no reference; the base profile's step *shape*, resized to fit your references |
+| `DEFAULT` | no reference and no rescaling; straight from the base profile |
+
+It writes `.utopia/profile.json` and `.utopia/responsive.json`. The second file
+records decisions so they are **never re-asked** — delete a key to be asked again.
+
+**Always report the DERIVED values as proposals.** The two-anchor method's whole
+guarantee is that both ends are real. A derived end is a reasonable estimate, and
+saying so is the difference between a proposal and a lie.
 
 ---
 
-## Step 5 — Prove it
-
-Four checks. Run them; report failures verbatim rather than paraphrasing.
+## Step 3 — Validate
 
 ```bash
-node scripts/sweep.mjs    <tokens.css> --profile <p>.json   # scale integrity
-node scripts/contrast.mjs <tokens.css> --profile <p>.json   # WCAG at the min anchor
-node scripts/audit.mjs    <src-dir>    --profile <p>.json   # doctrine violations
-node scripts/measure.mjs  <url>        --profile <p>.json   # rendered drift (needs Playwright)
+node scripts/sweep.mjs    tokens.css --profile .utopia/profile.json
+node scripts/contrast.mjs tokens.css --profile .utopia/profile.json
+node scripts/audit.mjs    src/       --profile .utopia/profile.json
+node scripts/measure.mjs  <url>      --profile .utopia/profile.json   # needs Playwright
 ```
 
 - **`sweep`** — monotonicity, band containment, global bounds, step separation
@@ -118,14 +84,78 @@ node scripts/measure.mjs  <url>        --profile <p>.json   # rendered drift (ne
 - **`audit`** — clamped floors, px leading/tracking on fluid text, bare `vw`,
   clamped `ch`, scalars inside media queries, inert ellipsis, `%` on a pinned
   column, unregistered breakpoints.
-- **`measure`** — the one that needs a browser. A 44px column rendering 52.8px is
-  invisible to every other check, because the stylesheet is correct and the
-  *layout engine* overruled it.
+- **`measure`** — the one needing a browser. A 44px column rendering 52.8px is
+  invisible to every other check: the stylesheet is correct and the *layout
+  engine* overruled it.
 
 > Fluid design needs measurement, because its failures are a few pixels wide and
 > invisible in review.
 
-Exit codes are non-zero on errors, so all four drop into CI.
+---
+
+## Step 4 — Ask only what's left
+
+`init.mjs` prints a **DECISIONS NEEDED** block when it hits something it cannot
+resolve — for example two roles pinned onto the same size with the readability
+floor beneath them. Put those to the user with the options it listed.
+
+Beyond that, the bar for asking is high. **Ask only if one of these is true:**
+
+1. It is a **product or content** decision no tool can derive.
+2. Getting it wrong is **expensive to reverse** (it shapes the DOM, not a value).
+3. Detection found a **genuine conflict** between two sources.
+
+Everything else: pick the sensible default, **build it, and say what you
+assumed** in one line. An assumption stated plainly is cheaper for everyone than
+a question asked upfront — the user corrects it in a sentence if it's wrong.
+
+### Worth asking
+
+| Question | Why it clears the bar |
+|---|---|
+| Is the mobile nav the same list as desktop? | Product decision. Items get *promoted* into a tab bar and others *demoted*; no tool can derive that |
+| Table drop order as it narrows? | Ranking by decision-value-per-pixel needs domain knowledge |
+| Below ~560px: scroll sideways, or rows become cards? | Depends on whether people scan or read. Changes the markup |
+| What must never truncate? | A product name is how someone identifies a row |
+| What fills the space on desktop? | Widening isn't "the same design, bigger" — something must earn the room |
+
+Ask these **only when the relevant thing exists.** No table means no table
+questions.
+
+### Not worth asking — assume and state
+
+Anchors · device floor (320) · column steps (4/8/12) · tap and focus floors ·
+contrast target (AA) · output format · line-height and tracking units · whether
+button padding is static. All have a correct or conventional answer. State it,
+don't ask it.
+
+### Never ask
+
+Anything `detect.mjs` already answered. Anything in `.utopia/responsive.json`.
+Anything you asked earlier in the session.
+
+---
+
+## Reference counts — all three work
+
+| References | What happens |
+|---|---|
+| **Two frames** | Every referenced token is `READ`. This is the good case |
+| **One frame** | The missing end is `DERIVED` using that token's own base ratio, and labelled a proposal |
+| **None** | Everything is `DEFAULT`. You get working, validated tokens with zero input |
+
+Unreferenced tokens are `SCALED` into the referenced range rather than left at
+base values — a scale is a coherent system, and grafting a stranger's caption
+onto your body text produces collisions.
+
+---
+
+## Direction
+
+`derive-desktop` is not the mirror of `derive-mobile`. Going down you decide what
+**collapses**: nav, columns, truncation, header contents. Going up you decide what
+**expands**: the characteristic mobile-first failure isn't small text, it's a 45ch
+column stranded in 1440px with nothing beside it.
 
 ---
 
@@ -144,7 +174,7 @@ or before overriding a validator finding.
 | File | Read it when |
 |---|---|
 | `references/doctrine.md` | deciding scalar vs structural vs static, or overriding a finding |
-| `references/elicitation.md` | running Step 3 — full question bank, both directions |
+| `references/elicitation.md` | you need the full question bank for either direction |
 | `references/tables.md` | any data table; the four rules that make one survive the trip |
 | `references/structural-patterns.md` | nav, tile grids, carousels, rails, headers, pagination, disclosure |
 | `references/gotchas.md` | a validator fired and you want the reasoning |
@@ -155,6 +185,7 @@ or before overriding a validator finding.
 ## Rules
 
 - Never hand-write a `clamp()`. Reference a token or regenerate.
+- Never present a derived value as though it came from a design.
 - Never put a tap target, focus ring or button padding inside a `clamp()`.
 - Never use `height` on something tappable — always `min-height`.
 - Never add a breakpoint that can't answer a question in plain words.

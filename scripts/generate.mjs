@@ -37,8 +37,14 @@ const fmt = (n) => {
  *   base  = minSize - slope * minWidth
  *   clamp(minRem, baseRem + slopeVw, maxRem)
  */
-function clampFor(minSize, maxSize, minWidth, maxWidth, root) {
+const inverted = [];
+
+function clampFor(minSize, maxSize, minWidth, maxWidth, root, name = '?') {
   if (minSize === maxSize) return `${fmt(minSize / root)}rem`;
+  // Taking min()/max() here would quietly produce a token that SHRINKS as the
+  // viewport grows, and every downstream check would pass because both ends
+  // are individually legal. Surface it instead.
+  if (minSize > maxSize) inverted.push({ name, minSize, maxSize });
   const slope = (maxSize - minSize) / (maxWidth - minWidth);
   const base = minSize - slope * minWidth;
   const lo = Math.min(minSize, maxSize) / root;
@@ -46,8 +52,8 @@ function clampFor(minSize, maxSize, minWidth, maxWidth, root) {
   return `clamp(${fmt(lo)}rem, ${fmt(base / root)}rem + ${fmt(slope * 100)}vw, ${fmt(hi)}rem)`;
 }
 
-function buildClamp(minSize, maxSize, minWidth, maxWidth, root) {
-  if (core?.calculateClamp && minSize !== maxSize) {
+function buildClamp(minSize, maxSize, minWidth, maxWidth, root, name) {
+  if (core?.calculateClamp && minSize !== maxSize && minSize < maxSize) {
     return core.calculateClamp({
       minSize,
       maxSize,
@@ -57,7 +63,7 @@ function buildClamp(minSize, maxSize, minWidth, maxWidth, root) {
       usePx: false,
     });
   }
-  return clampFor(minSize, maxSize, minWidth, maxWidth, root);
+  return clampFor(minSize, maxSize, minWidth, maxWidth, root, name);
 }
 
 function parseArgs(argv) {
@@ -109,7 +115,7 @@ function main() {
     for (const [name, spec] of Object.entries(typeScale)) {
       const [lo, hi] = spec.pair;
       L.push(`  /* ${name.replace('--font-', '')} — ${lo}px → ${hi}px | ${spec.use} */`);
-      L.push(`  ${name}: ${buildClamp(lo, hi, minW, maxW, root)};`);
+      L.push(`  ${name}: ${buildClamp(lo, hi, minW, maxW, root, name)};`);
     }
     L.push('');
   }
@@ -142,7 +148,7 @@ function main() {
     for (const [name, spec] of Object.entries(spaceScale)) {
       const [lo, hi] = spec.pair;
       const note = `/* ${String(lo).padStart(2)} → ${String(hi).padStart(2)} */`;
-      L.push(`  ${pad(name + ':', 22)} ${pad(buildClamp(lo, hi, minW, maxW, root) + ';', 48)} ${note}`);
+      L.push(`  ${pad(name + ':', 22)} ${pad(buildClamp(lo, hi, minW, maxW, root, name) + ';', 48)} ${note}`);
     }
     L.push('');
   }
@@ -209,6 +215,15 @@ function main() {
       L.push(`@media (min-width: ${st.minWidth}px)  { :root { --grid-columns: ${st.columns};  } }`);
     }
     L.push('');
+  }
+
+  if (inverted.length) {
+    console.error('\n  ✗ inverted token pair(s) — the mobile end is LARGER than the desktop end:\n');
+    for (const i of inverted)
+      console.error(`      ${i.name}: ${i.minSize} → ${i.maxSize}`);
+    console.error('\n  This would render a value that shrinks as the viewport grows. Fix the');
+    console.error('  profile pair; do not let the generator paper over it.\n');
+    process.exit(1);
   }
 
   const css = L.join('\n');

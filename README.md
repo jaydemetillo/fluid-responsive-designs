@@ -87,7 +87,7 @@ All four exit non-zero on errors, so they drop straight into CI.
 ```bash
 git clone https://github.com/jaydemetillo/fluid-responsive-designs.git
 cd fluid-responsive-designs
-node test/run.mjs          # 8 proofs, no install required
+node test/run.mjs          # 13 proofs, no install required
 ```
 
 Everything runs on plain Node ≥18 with zero dependencies. `utopia-core` is an
@@ -99,12 +99,43 @@ Only `measure.mjs` needs anything installed:
 npm i -D playwright && npx playwright install chromium
 ```
 
-### Generate a token set
+### Start from whatever references you have
+
+`init.mjs` handles all three cases. It never asks for a frame you don't have.
 
 ```bash
-node scripts/generate.mjs --profile profiles/default.json --out tokens.css
-node scripts/sweep.mjs tokens.css --profile profiles/default.json
+# no design at all
+node scripts/init.mjs --out .utopia
+
+# one frame, or two — put whichever values you have into refs.json
+node scripts/init.mjs --refs refs.json --out .utopia
+
+node scripts/generate.mjs --profile .utopia/profile.json --out tokens.css
+node scripts/sweep.mjs tokens.css --profile .utopia/profile.json
 ```
+
+```json
+{
+  "anchors": { "min": 390, "max": 1440 },
+  "desktop": { "--font-body-default": 14, "--space-m": 24 },
+  "mobile":  { "--font-body-default": 12 }
+}
+```
+
+Every token is labelled by how it was resolved:
+
+| Label | Meaning |
+|---|---|
+| `READ` | both ends came from a design — nothing invented |
+| `DERIVED` | one end came from a design; the other is **a proposal**, and says so |
+| `SCALED` | no reference; the base profile's step *shape*, resized into your range |
+| `DEFAULT` | no reference and no rescaling |
+
+Unreferenced tokens are rescaled rather than left at base values, because a
+scale is a coherent system — grafting a stranger's caption onto your body text
+produces collisions. When two roles genuinely cannot be separated (both pinned,
+with the readability floor beneath them), it prints a **DECISIONS NEEDED** block
+with real options instead of quietly fudging a number.
 
 Edit the **profile**, never the generated CSS.
 
@@ -142,10 +173,12 @@ directory:
 ln -s "$PWD" ~/.claude/skills/fluid-responsive
 ```
 
-It handles all six real situations: greenfield, from a Figma design, or from
-existing code — crossed with desktop→mobile and mobile→desktop, and with the
-case where only one frame exists and the other anchor has to be *derived and
-labelled as derived*.
+It builds first and asks second. Questions are reserved for the three cases a
+tool genuinely cannot settle — a product decision (is the mobile nav the same
+list as desktop?), a choice that reshapes the DOM (does a table become cards?),
+or a real conflict between sources. Everything else gets a sensible default and
+a one-line note saying what was assumed, which is cheaper to correct than a
+question is to answer.
 
 ---
 
@@ -157,6 +190,7 @@ profiles/                 the source of truth: anchors, pairs, floors, registry
 references/               doctrine, elicitation bank, tables, patterns, gotchas, Figma
 scripts/
   detect.mjs              read before you ask; recovers anchors from clamps
+  init.mjs                0, 1 or 2 references -> a working profile
   generate.mjs            profile → fluid-tokens.css
   sweep.mjs               scale integrity across the viewport range
   contrast.mjs            WCAG judged at the minimum anchor

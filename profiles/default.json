@@ -60,7 +60,7 @@
       "--space-xl": { "pair": [32, 48], "use": "section block padding" },
       "--space-2xl": { "pair": [48, 64], "use": "between major page sections" },
       "--space-3xl": { "pair": [64, 96], "use": "hero block, page-level breathing room" },
-      "--space-page-margin": { "pair": [16, 80], "use": "page horizontal margin (custom pair)" }
+      "--space-page-margin": { "pair": [16, 80], "customPair": true, "use": "page horizontal margin (custom pair)" }
     },
     "tokens": [
       "--space-3xs",
