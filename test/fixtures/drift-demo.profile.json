@@ -1,0 +1,29 @@
+{
+  "id": "drift-demo",
+  "name": "Fixture — column drift with no stretchy column",
+  "description": "Two assertions against drift-demo.html. One selector is real; one is deliberately wrong, to prove that a selector matching nothing is reported as an error rather than passing silently.",
+
+  "rootFontSize": 16,
+  "anchors": { "min": 390, "max": 1440 },
+
+  "measure": {
+    "widths": [390, 768, 1440],
+    "tolerancePx": 0.5,
+    "noPageHScroll": true,
+    "fixedWidths": [
+      {
+        "selector": "th.col-select",
+        "expected": 44,
+        "why": "Every column declares a width and none absorbs the slack, so CSS table layout shares it across all of them — inflating the 44px checkbox column."
+      },
+      {
+        "selector": "th.this-selector-does-not-exist",
+        "expected": 44,
+        "why": "Deliberately wrong. Must be reported, never skipped."
+      }
+    ],
+    "noWrap": [".cell-text"],
+    "truncates": [".cell-text"],
+    "noOverlap": ["thead th"]
+  }
+}

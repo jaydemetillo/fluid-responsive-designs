@@ -208,11 +208,45 @@ check('generator refuses to paper over an inverted pair', () => {
   return /inverted token pair/.test(g.out) ? null : `wrong failure:\n${g.out}`;
 });
 
+// ---- live browser: only runs if Playwright is present ----------------------
+let hasPlaywright = false;
+try {
+  await import('playwright');
+  hasPlaywright = true;
+} catch {
+  /* stays zero-install; these two cases are skipped rather than failed */
+}
+
+if (hasPlaywright) {
+  const page = `file://${join(root, 'test', 'fixtures', 'drift-demo.html')}`;
+  const prof = F('drift-demo.profile.json');
+  const r = run(S('measure.mjs'), [page, '--profile', prof]);
+
+  check('measure catches real column drift a stylesheet cannot reveal', () => {
+    if (!/\[drift\] th\.col-select measures/.test(r.out))
+      return `did not report drift:\n${r.out}`;
+    // The whole point: the token says 44 and the layout engine says otherwise.
+    const m = r.out.match(/measures ([\d.]+)px but its token says 44px/);
+    if (!m) return 'drift reported without the measured value';
+    if (parseFloat(m[1]) <= 44) return `measured ${m[1]}px — fixture is not actually drifting`;
+    return null;
+  });
+
+  check('a selector matching nothing is an error, never a silent pass', () => {
+    if (!/\[selector-missed\] "th\.this-selector-does-not-exist"/.test(r.out))
+      return `an unmatched selector was skipped instead of reported:\n${r.out}`;
+    if (!/checked NOTHING/.test(r.out)) return 'did not summarise the unchecked assertions';
+    return null;
+  });
+} else {
+  results.push({ name: 'live browser checks (Playwright not installed — skipped)', ok: true, skipped: true });
+}
+
 // ---- report ---------------------------------------------------------------
 console.log('\n  fluid-responsive-designs — validator proofs\n');
 let failed = 0;
 for (const r of results) {
-  console.log(`  ${r.ok ? '✓' : '✗'} ${r.name}`);
+  console.log(`  ${r.skipped ? '–' : r.ok ? '✓' : '✗'} ${r.name}`);
   if (!r.ok) {
     console.log(`      ${r.problem}`);
     failed++;

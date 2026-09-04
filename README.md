@@ -87,7 +87,7 @@ All four exit non-zero on errors, so they drop straight into CI.
 ```bash
 git clone https://github.com/jaydemetillo/fluid-responsive-designs.git
 cd fluid-responsive-designs
-node test/run.mjs          # 13 proofs, no install required
+node test/run.mjs          # 15 proofs (13 with no install at all)
 ```
 
 Everything runs on plain Node ≥18 with zero dependencies. `utopia-core` is an

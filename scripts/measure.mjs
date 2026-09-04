@@ -55,6 +55,22 @@ const findings = [];
 const flag = (severity, check, width, message, why) =>
   findings.push({ severity, check, width, message, why });
 
+/**
+ * An assertion whose selector matches nothing is worse than no assertion: it
+ * reports success without having checked anything, which is exactly the
+ * failure mode this script exists to prevent. Report it once per selector
+ * rather than once per width.
+ */
+const missing = new Set();
+function requireMatch(selector, count, width) {
+  if (count > 0 || missing.has(selector)) return false;
+  missing.add(selector);
+  flag('error', 'selector-missed', width,
+    `"${selector}" matched no element on the page, so nothing was checked.`,
+    'A green run against a selector that matches nothing proves nothing. Fix the selector in the profile, or delete the assertion if it no longer applies.');
+  return true;
+}
+
 const round = (n, dp = 2) => Math.round(n * 10 ** dp) / 10 ** dp;
 
 async function main() {
@@ -72,7 +88,19 @@ async function main() {
   const widths = m.widths ?? [anchors.min, 480, 600, 699, 700, 768, 899, 900, 1024, 1200, anchors.max];
   const tol = m.tolerancePx ?? 0.5;
 
-  const browser = await chromium.launch();
+  let browser;
+  try {
+    browser = await chromium.launch();
+  } catch (e) {
+    // The npm package can be present while the browser binary is not — a
+    // half-finished install. Say so plainly instead of dumping a stack trace.
+    const needsBinary = /Executable doesn't exist|playwright install/i.test(String(e?.message));
+    console.error(`\n  Could not start a browser.\n`);
+    console.error(needsBinary
+      ? '    The playwright package is installed but its browser binary is not:\n\n      npx playwright install chromium\n'
+      : `    ${e?.message ?? e}\n`);
+    process.exit(2);
+  }
   const page = await browser.newPage();
 
   for (const width of widths) {
@@ -97,7 +125,7 @@ async function main() {
         const el = document.querySelector(sel);
         return el ? el.getBoundingClientRect().width : null;
       }, spec.selector);
-      if (measured === null) continue;
+      if (measured === null) { requireMatch(spec.selector, 0, width); continue; }
       if (Math.abs(measured - spec.expected) > tol)
         flag('error', 'drift', width,
           `${spec.selector} measures ${round(measured)}px but its token says ${spec.expected}px.`,
@@ -112,7 +140,7 @@ async function main() {
         const el = document.querySelector(sel);
         return el ? el.getBoundingClientRect().width : null;
       }, spec.selector);
-      if (measured === null) continue;
+      if (measured === null) { requireMatch(spec.selector, 0, width); continue; }
       if (Math.abs(measured - expected) > tol)
         flag('error', 'anchor-miss', width,
           `${spec.selector} measures ${round(measured)}px at the anchor; the design says ${expected}px.`,
@@ -121,6 +149,8 @@ async function main() {
 
     // ---- nothing wraps to a second line --------------------------------
     for (const sel of m.noWrap ?? []) {
+      const n = await page.evaluate((s) => document.querySelectorAll(s).length, sel);
+      if (requireMatch(sel, n, width)) continue;
       const bad = await page.evaluate((s) => {
         const out = [];
         for (const el of document.querySelectorAll(s)) {
@@ -138,6 +168,8 @@ async function main() {
 
     // ---- overflowing text must actually truncate ------------------------
     for (const sel of m.truncates ?? []) {
+      const n = await page.evaluate((s) => document.querySelectorAll(s).length, sel);
+      if (requireMatch(sel, n, width)) continue;
       const bad = await page.evaluate((s) => {
         const out = [];
         for (const el of document.querySelectorAll(s)) {
@@ -159,6 +191,8 @@ async function main() {
 
     // ---- neighbours must not overlap ------------------------------------
     for (const sel of m.noOverlap ?? []) {
+      const n = await page.evaluate((s) => document.querySelectorAll(s).length, sel);
+      if (requireMatch(sel, n, width)) continue;
       const overlaps = await page.evaluate((s) => {
         const els = [...document.querySelectorAll(s)].map((e) => ({
           r: e.getBoundingClientRect(),
@@ -186,6 +220,9 @@ async function main() {
           const el = document.querySelector(s);
           return el ? parseFloat(getComputedStyle(el).fontSize) : null;
         }), m.monotonicText);
+      m.monotonicText.forEach((sel, i) => {
+        if (sizes[i] === null) requireMatch(sel, 0, width);
+      });
       for (let i = 0; i < sizes.length - 1; i++) {
         if (sizes[i] === null || sizes[i + 1] === null) continue;
         if (sizes[i] > sizes[i + 1] + 0.01)
@@ -230,6 +267,8 @@ function report(args, profile, widths) {
   }
 
   if (!findings.length) console.log('  ✓ zero drift, no overlap, no wrap, nothing untruncated');
+  if (missing.size)
+    console.log(`  ${missing.size} selector(s) matched nothing — those assertions checked NOTHING.`);
   console.log(`\n  ${errors.length} error(s), ${warns.length} warning(s)\n`);
   process.exit(errors.length ? 1 : 0);
 }

@@ -30,5 +30,8 @@
     "wcag",
     "accessibility",
     "claude-skill"
-  ]
+  ],
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
 }

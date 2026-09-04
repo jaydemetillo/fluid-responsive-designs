@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Drift demo — no stretchy column</title>
+<style>
+  :root {
+    --tap-target-min: 44px;
+    --font-body: clamp(0.75rem, 0.7036rem + 0.1905vw, 0.875rem);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 400 14px system-ui, sans-serif; }
+  .wrap { overflow-x: auto; }
+
+  /* This table declares fixed widths for EVERY column and leaves none to
+     absorb the slack. CSS table layout then shares the leftover space across
+     all of them proportionally — including the 44px checkbox column, which is
+     supposed to be exactly 44px. That is the 52.8px bug. */
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th, td { border-bottom: 1px solid #ddd; padding: 8px; font-size: var(--font-body); text-align: left; }
+
+  .col-select { width: 44px; }
+  .col-name   { width: 180px; }
+  .col-desc   { width: 220px; }
+  .col-qty    { width: 80px; }
+
+  /* Truncation done correctly: block-level wrapper inside the cell. */
+  .cell-text {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <table class="inventory">
+      <thead>
+        <tr>
+          <th class="col-select"><span class="cell-text">Sel</span></th>
+          <th class="col-name"><span class="cell-text">Item Name</span></th>
+          <th class="col-desc"><span class="cell-text">Description</span></th>
+          <th class="col-qty"><span class="cell-text">Units</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-select"><input type="checkbox" aria-label="Select row"></td>
+          <td class="col-name"><span class="cell-text">Nitrile Examination Gloves</span></td>
+          <td class="col-desc"><span class="cell-text">Powder-free, blue, textured fingertips, box of 100</span></td>
+          <td class="col-qty"><span class="cell-text">240</span></td>
+        </tr>
+        <tr>
+          <td class="col-select"><input type="checkbox" aria-label="Select row"></td>
+          <td class="col-name"><span class="cell-text">Sterile Gauze Swabs</span></td>
+          <td class="col-desc"><span class="cell-text">10cm x 10cm, 8-ply, individually wrapped</span></td>
+          <td class="col-qty"><span class="cell-text">1,120</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
