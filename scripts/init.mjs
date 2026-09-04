@@ -45,6 +45,18 @@ const CURVE = {
   space: { base: 4, compression: 0.6, floor: 4, round: 4 },
 };
 
+/**
+ * The type floor belongs to the profile, not to this file. A dense admin UI
+ * legitimately uses 11px uppercase labels; hardcoding 12 here forces roles to
+ * collide that the profile never said were illegal.
+ */
+function applyFloors(profile) {
+  const gb = profile.type?.globalBounds?.min;
+  if (typeof gb === 'number') CURVE.type.floor = gb;
+  const gp = profile.space?.gridPt;
+  if (typeof gp === 'number') CURVE.space.round = gp;
+}
+
 const kindOf = (name) => (/^--font-|^--text-|font|title|body|heading|caption/i.test(name) ? 'type' : 'space');
 const snap = (v, to) => Math.max(to, Math.round(v / to) * to);
 
@@ -93,6 +105,8 @@ function main() {
     ? resolve(args.from)
     : join(__dirname, '..', 'profiles', `${args.from}.json`);
   const base = JSON.parse(readFileSync(basePath, 'utf8'));
+
+  applyFloors(base);
 
   const refs = args.refs ? JSON.parse(readFileSync(resolve(args.refs), 'utf8')) : {};
   const desktop = refs.desktop ?? {};
@@ -201,6 +215,25 @@ function main() {
     );
     if (section === 'type') profile.type.scaleOrder = ordered;
     else profile.space.tokens = ordered;
+  }
+
+  /**
+   * A design that uses three type roles does not need five. Carrying over
+   * unreferenced roles invents hierarchy the design never asked for, and the
+   * invented values are the ones that collide. Opt in with
+   * "dropUnreferencedType": true when the references cover the whole scale.
+   */
+  if (refs.dropUnreferencedType) {
+    const referenced = new Set([...Object.keys(desktop), ...Object.keys(mobile)]);
+    for (const name of Object.keys(profile.type?.scale ?? {})) {
+      if (referenced.has(name)) continue;
+      delete profile.type.scale[name];
+      const idx = ledger.findIndex((l) => l.name === name);
+      if (idx >= 0) ledger.splice(idx, 1);
+    }
+    profile.type.scaleOrder = (profile.type.scaleOrder ?? []).filter((n) => profile.type.scale[n]);
+    for (const spec of Object.values(profile.type?.bands ?? {}))
+      spec.tokens = (spec.tokens ?? []).filter((n) => profile.type.scale[n]);
   }
 
   /**

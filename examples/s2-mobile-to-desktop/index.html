@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S2 · Station Dashboard — mobile → desktop</title>
+<link rel="stylesheet" href="./tokens.css">
+<style>
+  :root {
+    --c-bg: #f7f9fe;
+    --c-card: rgba(255,255,255,.66);
+    --c-card-solid: #fff;
+    --c-shadow: 0 4px 16px rgba(153,165,192,.15);
+    --c-shadow-lg: 0 8px 24px rgba(0,0,0,.1);
+    --c-text: #0c111d;
+    --c-text-mid: #475467;
+    --c-text-dim: #667085;
+    --c-line: #e4e7ec;
+    --c-accent: #1361f0;
+    --c-pink: #ff308d;
+    --c-amber: #ffa600;
+    --c-red: #c03434;
+
+    --nav-h: 92px;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--c-bg); color: var(--c-text);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: var(--font-body-default);
+    line-height: var(--leading-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  .t { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 0; }
+  :where(a, button):focus-visible {
+    outline: var(--focus-ring-width) solid var(--c-accent);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  /* ---------- header ---------- */
+  .hdr {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--space-m);
+    min-height: 72px;
+    padding: var(--space-xs) var(--space-page-margin);
+    background: rgba(255,255,255,.75);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--c-shadow);
+  }
+  .hdr-station { font-size: var(--font-body-small); font-weight: 700; color: var(--c-text-mid); letter-spacing: .01em; }
+  .hdr-name { font-size: var(--font-subtitle-default); font-weight: 800; }
+  .hdr-av {
+    width: 48px; height: 48px; flex: none; border-radius: 50%;
+    background: rgba(19,97,240,.9); color: #fff;
+    display: grid; place-items: center; font-size: var(--font-subtitle-small);
+  }
+  /* Desktop-only header nav: revealed, not stretched. */
+  .hdr-nav { display: none; gap: var(--space-xs); }
+  .hdr-nav a {
+    min-height: var(--tap-target-min); display: inline-flex; align-items: center;
+    padding-inline: var(--space-xs); border-radius: 100px;
+    text-decoration: none; color: var(--c-text-mid);
+    font-size: var(--font-body-default); font-weight: 600;
+  }
+  .hdr-nav a[aria-current="page"] { background: rgba(19,97,240,.12); color: var(--c-accent); }
+
+  /* ---------- page ---------- */
+  .page {
+    padding: var(--space-m) var(--space-page-margin) var(--nav-h);
+    max-width: 1440px; margin-inline: auto;
+  }
+  h1.greet { font-size: var(--font-title-default); font-weight: 800; margin: 0 0 var(--space-l); line-height: var(--leading-tight); }
+
+  /* Phone: one column, source order. Desktop: CSS moves the rail — the DOM
+     is never reordered, so the tab key and a screen reader keep phone order. */
+  .grid { display: flex; flex-direction: column; gap: var(--space-l); }
+
+  .card {
+    background: var(--c-card); border-radius: 16px; box-shadow: var(--c-shadow);
+    padding: var(--pad-card); backdrop-filter: blur(8px);
+  }
+  .card h2 { font-size: var(--font-subtitle-small); font-weight: 800; margin: 0 0 var(--space-xs); }
+
+  /* action required */
+  .alert { padding: 0; overflow: hidden; display: flex; }
+  .alert-bar { width: 6px; flex: none; background: linear-gradient(to bottom, var(--c-pink), var(--c-amber)); }
+  .alert-body { flex: 1 1 auto; min-width: 0; padding: var(--pad-card); }
+  .alert-kicker { font-size: var(--font-body-default); font-weight: 800; color: var(--c-pink); letter-spacing: .01em; margin-bottom: var(--space-xs); }
+  .alert-row {
+    display: flex; align-items: center; gap: var(--space-xs);
+    min-height: var(--tap-target-min);
+    text-decoration: none; color: inherit;
+  }
+  .alert-row + .alert-row { border-top: 1px solid var(--c-line); }
+  .alert-row .ico { width: 20px; height: 20px; flex: none; border-radius: 50%; border: 2px solid var(--c-pink); }
+  .alert-row:nth-child(2) .ico { border-color: var(--c-amber); border-radius: 4px; }
+  .alert-row:nth-child(3) .ico { border-color: var(--c-text-mid); border-radius: 4px; }
+  .alert-row .lbl { flex: 1 1 auto; min-width: 0; font-size: var(--font-subtitle-small); font-weight: 700; }
+  .chev { width: 20px; height: 20px; flex: none; color: var(--c-text-dim); display: grid; place-items: center; }
+
+  /* resume */
+  .kicker { font-size: var(--font-body-small); font-weight: 700; color: var(--c-text-dim); }
+  .resume-title { font-size: var(--font-subtitle-default); font-weight: 800; }
+  .resume-meta { font-size: var(--font-body-default); color: var(--c-text-mid); }
+  .btn {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 48px;                      /* static, above the 44px floor */
+    padding-inline: var(--pad-btn-lg-inline);
+    border-radius: 100px; border: 0; cursor: pointer;
+    font-size: var(--font-subtitle-small); font-weight: 700;
+    width: 100%; margin-top: var(--space-xs);
+  }
+  .btn-primary { background: rgba(19,97,240,.9); color: #fff; }
+  .btn-ghost { background: rgba(255,255,255,.7); color: var(--c-text); box-shadow: var(--c-shadow); }
+
+  /* quick actions — auto-fit decides the column count, no breakpoint */
+  .qa { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-xs); }
+  .qa a {
+    display: flex; align-items: center; gap: var(--space-xs);
+    min-height: 56px; padding-inline: var(--pad-card);
+    background: var(--c-card); border-radius: 16px; box-shadow: var(--c-shadow);
+    text-decoration: none; color: inherit;
+    font-size: var(--font-subtitle-small); font-weight: 700;
+  }
+  .qa .ico { width: 24px; height: 24px; flex: none; border-radius: 6px; background: rgba(19,97,240,.18); }
+
+  /* stock status */
+  .ss { display: flex; align-items: center; gap: var(--space-l); flex-wrap: wrap; }
+  .donut {
+    width: 96px; height: 96px; flex: none; border-radius: 50%;
+    background: conic-gradient(var(--c-accent) 0 87%, var(--c-amber) 87% 94%, var(--c-pink) 94% 100%);
+    display: grid; place-items: center;
+  }
+  .donut span {
+    width: 76px; height: 76px; border-radius: 50%; background: var(--c-bg);
+    display: grid; place-items: center; font-size: var(--font-subtitle-default); font-weight: 800;
+  }
+  .legend { flex: 1 1 180px; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2xs); }
+  .legend div { display: flex; align-items: center; gap: var(--space-2xs); font-size: var(--font-body-default); font-weight: 600; color: var(--c-text-mid); }
+  .sw { width: 12px; height: 12px; border-radius: 4px; flex: none; }
+
+  /* lists */
+  .row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--space-xs); min-height: var(--tap-target-min);
+  }
+  .row + .row { border-top: 1px solid var(--c-line); }
+  .row .nm { font-size: var(--font-body-default); font-weight: 700; }
+  .row .sub { font-size: var(--font-body-small); color: var(--c-text-dim); }
+  .row .rt { font-size: var(--font-body-default); font-weight: 800; white-space: nowrap; }
+  .more {
+    display: inline-flex; align-items: center; min-height: var(--tap-target-min);
+    color: var(--c-accent); font-weight: 700; text-decoration: none;
+    font-size: var(--font-body-default);
+  }
+  .pipdot { width: 12px; height: 12px; border-radius: 6px; flex: none; }
+
+  /* ---------- mobile tab bar ---------- */
+  .tabbar {
+    position: fixed; inset: auto 0 0 0; z-index: 10;
+    padding: var(--space-2xs) var(--space-xs) calc(var(--space-xs) + env(safe-area-inset-bottom));
+  }
+  .tabbar-inner {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,.85); backdrop-filter: blur(14px);
+    border-radius: 34px; box-shadow: var(--c-shadow-lg);
+    padding-inline: var(--space-2xs); min-height: 68px;
+  }
+  .tabbar a {
+    flex: 1 1 0; min-width: 0; min-height: var(--tap-target-min);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    text-decoration: none; color: var(--c-text-dim);
+    font-size: var(--font-body-small); font-weight: 600;
+  }
+  .tabbar a[aria-current="page"] { color: var(--c-accent); font-weight: 800; }
+  .tabbar .ico { width: 24px; height: 24px; border-radius: 6px; background: currentColor; opacity: .5; }
+
+  /* =====================================================================
+     STRUCTURAL STEPS — the only media queries here.
+     Going UP, the question is never "make it bigger" but "what earns the
+     new space?" A 45ch column stretched to 1440px is the classic failure.
+     ===================================================================== */
+
+  /* "Is there room for the nav in the header instead of a bottom bar?" */
+  @media (min-width: 900px) {
+    .tabbar { display: none; }
+    .hdr-nav { display: flex; }
+    :root { --nav-h: var(--space-2xl); }
+  }
+
+  /* "Is there room for a second column beside the main one?" */
+  @media (min-width: 1100px) {
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.647fr) minmax(0, 1fr);  /* 692:420 as a ratio */
+      align-items: start;
+      gap: var(--space-l);
+    }
+    .col-a { grid-column: 1; }
+    .col-b { grid-column: 2; }
+    /* Content earns the space by revealing, not by stretching. */
+    .qa { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div style="min-width:0">
+    <div class="hdr-station t">Bedok Station</div>
+    <div class="hdr-name t">Aisha Rahman</div>
+  </div>
+  <nav class="hdr-nav" aria-label="Main">
+    <a href="#" aria-current="page">Home</a>
+    <a href="#">Stock</a>
+    <a href="#">Expiring</a>
+    <a href="#">History</a>
+    <a href="#">Reports</a>
+  </nav>
+  <div class="hdr-av">AR</div>
+</header>
+
+<main class="page">
+  <h1 class="greet">Good morning, Aisha</h1>
+
+  <div class="grid">
+    <!-- col-a: the primary column on desktop, first on the phone -->
+    <section class="col-a" style="display:flex;flex-direction:column;gap:var(--space-l)">
+      <div class="card alert">
+        <div class="alert-bar"></div>
+        <div class="alert-body">
+          <div class="alert-kicker">ACTION REQUIRED</div>
+          <a class="alert-row" href="#"><span class="ico"></span><span class="lbl t">3 expired batches remaining</span><span class="chev">›</span></a>
+          <a class="alert-row" href="#"><span class="ico"></span><span class="lbl t">7 items out of stock</span><span class="chev">›</span></a>
+          <a class="alert-row" href="#"><span class="ico"></span><span class="lbl t">Stock take overdue for 34 items</span><span class="chev">›</span></a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kicker">ONGOING SESSION</div>
+        <div class="resume-title t">Stock take · Bedok Store</div>
+        <div class="resume-meta">Started 2h ago by you</div>
+        <button class="btn btn-primary">Resume</button>
+      </div>
+
+      <div>
+        <h2 style="font-size:var(--font-subtitle-small);font-weight:800;margin:0 0 var(--space-xs)">Quick Actions</h2>
+        <div class="qa">
+          <a href="#"><span class="ico"></span>Withdraw</a>
+          <a href="#"><span class="ico"></span>Stock up</a>
+          <a href="#"><span class="ico"></span>Stock take</a>
+          <a href="#"><span class="ico"></span>Disposal</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- col-b: rail on desktop, simply continues below on a phone -->
+    <section class="col-b" style="display:flex;flex-direction:column;gap:var(--space-l)">
+      <div class="card">
+        <h2>Stock Status</h2>
+        <div class="ss">
+          <div class="donut" role="img" aria-label="87 percent of stock has no issues"><span>87%</span></div>
+          <div class="legend">
+            <div><i class="sw" style="background:var(--c-accent)"></i>No issues</div>
+            <div><i class="sw" style="background:var(--c-amber)"></i>Low / Out of Stock</div>
+            <div><i class="sw" style="background:var(--c-pink)"></i>Expiring / Expired</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost">View available stock</button>
+      </div>
+
+      <div class="card">
+        <h2>Expiring Soon</h2>
+        <div class="row"><div style="min-width:0"><div class="nm t">Adrenaline 1mg Ampoule</div><div class="sub t">Exp: 12 Mar 2027 · 2 batches</div></div><i class="pipdot" style="background:var(--c-pink)"></i></div>
+        <div class="row"><div style="min-width:0"><div class="nm t">Fentanyl 100mcg Ampoule</div><div class="sub t">Exp: 28 Mar 2027 · 1 batch</div></div><i class="pipdot" style="background:var(--c-pink)"></i></div>
+        <div class="row"><div style="min-width:0"><div class="nm t">Morphine 10mg Ampoule</div><div class="sub t">Exp: 15 Apr 2027 · 3 batches</div></div><i class="pipdot" style="background:var(--c-amber)"></i></div>
+        <a class="more" href="#">View more</a>
+      </div>
+
+      <div class="card">
+        <h2>Low Stock Alerts</h2>
+        <div class="row"><div style="min-width:0"><div class="nm t">Naloxone 400mcg</div><div class="sub t">Min 10 nos</div></div><span class="rt" style="color:var(--c-red)">3 nos left</span></div>
+        <div class="row"><div style="min-width:0"><div class="nm t">Amiodarone 150mg</div><div class="sub t">Min 15 nos</div></div><span class="rt" style="color:var(--c-amber)">5 nos left</span></div>
+        <div class="row"><div style="min-width:0"><div class="nm t">Normal Saline 100ml</div><div class="sub t">Min 20 nos</div></div><span class="rt" style="color:var(--c-amber)">8 nos left</span></div>
+        <a class="more" href="#">View more</a>
+      </div>
+    </section>
+  </div>
+</main>
+
+<nav class="tabbar" aria-label="Main">
+  <div class="tabbar-inner">
+    <a href="#" aria-current="page"><span class="ico"></span>Home</a>
+    <a href="#"><span class="ico"></span>Stock</a>
+    <a href="#"><span class="ico"></span>Expiring</a>
+    <a href="#"><span class="ico"></span>History</a>
+    <a href="#"><span class="ico"></span>Reports</a>
+  </div>
+</nav>
+</body>
+</html>

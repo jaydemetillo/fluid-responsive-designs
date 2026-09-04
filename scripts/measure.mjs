@@ -120,7 +120,14 @@ async function main() {
     }
 
     // ---- ZERO DRIFT: fixed widths must measure their exact token value --
-    for (const spec of m.fixedWidths ?? []) {
+    // A pinned column is only pinned below its breakpoint, so an assertion
+    // may declare the range it applies to. Outside that range it is skipped
+    // deliberately — which is not the same as a selector silently missing.
+    const inRange = (spec) =>
+      (spec.atLeast == null || width >= spec.atLeast) &&
+      (spec.atMost == null || width <= spec.atMost);
+
+    for (const spec of (m.fixedWidths ?? []).filter(inRange)) {
       const measured = await page.evaluate((sel) => {
         const el = document.querySelector(sel);
         return el ? el.getBoundingClientRect().width : null;

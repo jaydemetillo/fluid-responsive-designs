@@ -1,0 +1,21 @@
+{
+  "id": "s1-item-catalogue",
+  "name": "S1 \u2014 Item Catalogue (desktop frame only)",
+  "anchors": {
+    "min": 390,
+    "max": 1440
+  },
+  "desktop": {
+    "--font-body-small": 11,
+    "--font-body-default": 13,
+    "--font-subtitle-small": 16,
+    "--space-m": 16,
+    "--space-l": 24,
+    "--space-xl": 32,
+    "--space-page-margin": 32
+  },
+  "mobile": {
+    "--space-page-margin": 16
+  },
+  "note": "Page margin read from the sibling 390px frame in the same file; everything else desktop-only."
+}

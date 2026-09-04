@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S1 · Item Catalogue — desktop → mobile</title>
+<link rel="stylesheet" href="./tokens.css">
+<style>
+  /* ---------------------------------------------------------------------
+     Colour tokens. The Figma file declares no variables, so these are read
+     out of the frame once and referenced everywhere after — never inlined.
+     --------------------------------------------------------------------- */
+  :root {
+    --c-bg: #13151a;
+    --c-sidebar: rgba(23,25,33,.8);
+    --c-panel: #1e2028;
+    --c-raised: #22252e;
+    --c-border: #2a2d36;
+    --c-border-strong: #262933;
+    --c-text: #f2f4f7;
+    --c-text-muted: #a0a4ae;
+    --c-text-dim: #6b7080;
+    --c-accent: #1361f0;
+    --c-accent-soft: rgba(19,97,240,.15);
+    --c-accent-line: rgba(19,97,240,.4);
+    --c-ok: #34d399;
+    --c-warn: #fbbf24;
+    --c-err: #f87171;
+    --c-cat-med: #6b4bcc;
+    --c-cat-ppe: #0d9488;
+    --c-cat-iv: #1361f0;
+    --c-cat-air: #a36200;
+
+    /* Structural: the ONE thing allowed to step. */
+    --nav-h: 0px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--c-bg);
+    color: var(--c-text);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: var(--font-body-default);
+    line-height: var(--leading-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Truncation lives in exactly one place, on a block-level wrapper.
+     On a <td> or on inline text it silently does nothing. */
+  .t { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 0; }
+
+  /* Static floors — never clamped. */
+  :where(a, button, [role="button"], input):focus-visible {
+    outline: var(--focus-ring-width) solid var(--c-accent);
+    outline-offset: var(--focus-ring-offset);
+  }
+  .tap { min-height: var(--tap-target-min); display: flex; align-items: center; }
+
+  .shell { display: flex; min-height: 100dvh; align-items: stretch; }
+
+  /* ---------- sidebar (desktop) ---------- */
+  .sidebar {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 220px;
+    flex: 0 0 220px;
+    padding: var(--space-l);
+    background: var(--c-sidebar);
+    border-right: 1px solid var(--c-border-strong);
+    backdrop-filter: blur(15px);
+  }
+  .brand { display: flex; gap: var(--space-xs); align-items: center; margin-bottom: var(--space-l); }
+  .brand-dot { width: 26px; height: 26px; border-radius: 50%; background: var(--c-accent); flex: none; }
+  .brand-name { font-weight: 800; font-size: var(--font-body-default); }
+  .brand-sub { font-weight: 700; font-size: var(--font-body-small); color: var(--c-text-dim); text-transform: uppercase; }
+  .nav-group { margin-bottom: var(--space-m); }
+  .nav-label {
+    font-size: var(--font-body-small); font-weight: 700; color: var(--c-text-dim);
+    text-transform: uppercase; letter-spacing: .04em; margin-bottom: var(--space-3xs);
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: var(--space-xs);
+    min-height: var(--tap-target-min);
+    padding-inline: var(--space-xs);
+    border-radius: 10px; color: var(--c-text-muted);
+    font-size: var(--font-body-default); text-decoration: none;
+    border: 1px solid transparent;
+  }
+  .nav-item[aria-current="page"] {
+    background: var(--c-accent-soft); border-color: var(--c-accent-line);
+    color: var(--c-text); font-weight: 600;
+  }
+  .glyph { width: 16px; height: 16px; flex: none; border-radius: 3px; background: currentColor; opacity: .55; }
+  .sidebar-foot { display: flex; align-items: center; gap: var(--space-xs); padding-top: var(--space-m); border-top: 1px solid var(--c-border-strong); }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--c-accent); display: grid; place-items: center; font-size: var(--font-body-small); font-weight: 700; flex: none; }
+
+  /* ---------- main ---------- */
+  .main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; padding-bottom: var(--nav-h); }
+  .crumb {
+    display: flex; gap: var(--space-2xs); align-items: center;
+    padding: var(--space-m) var(--space-page-margin) var(--space-2xs);
+    font-size: var(--font-body-default); color: var(--c-text-dim);
+  }
+  .crumb b { color: var(--c-text); font-weight: 600; }
+
+  .toolbar {
+    display: flex; flex-wrap: wrap; gap: var(--space-xs);
+    align-items: center; justify-content: space-between;
+    padding: var(--space-s) var(--space-page-margin);
+    border-bottom: 1px solid var(--c-border);
+  }
+  .toolbar-left, .toolbar-right { display: flex; gap: var(--space-xs); align-items: center; min-width: 0; }
+  .toolbar-left { flex: 1 1 240px; }
+  .search {
+    display: flex; align-items: center; gap: var(--space-2xs);
+    flex: 1 1 160px; min-width: 0; max-width: 320px;
+    min-height: var(--tap-target-min);
+    padding-inline: var(--space-m);
+    background: var(--c-panel); border: 1px solid var(--c-border);
+    border-radius: 100px; color: var(--c-text-dim); font-size: var(--font-body-default);
+  }
+  .pill {
+    display: flex; align-items: center; gap: var(--space-3xs);
+    min-height: var(--tap-target-min); padding-inline: var(--space-xs);
+    border: 1px solid var(--c-border); border-radius: 100px;
+    font-size: var(--font-body-default); color: var(--c-text-muted); white-space: nowrap;
+  }
+  .pill b { color: var(--c-text); font-weight: 600; }
+  .btn-primary {
+    display: flex; align-items: center; gap: var(--space-2xs);
+    min-height: var(--tap-target-min);
+    /* Button padding is STATIC — fluid padding fights the 44px floor. */
+    padding-inline: var(--pad-btn-md-inline);
+    background: rgba(19,97,240,.2); border: 1px solid var(--c-accent-line);
+    border-radius: 100px; color: var(--c-text);
+    font-size: var(--font-body-default); font-weight: 600; white-space: nowrap;
+    cursor: pointer;
+  }
+  .seg { display: flex; border: 1px solid var(--c-border); border-radius: 8px; padding: 2px; }
+  .seg > span { padding: 6px var(--space-xs); border-radius: 6px; font-size: var(--font-body-default); color: var(--c-text-muted); }
+  .seg > span[aria-selected="true"] { background: rgba(19,97,240,.2); color: var(--c-text); font-weight: 600; }
+
+  .content { flex: 1 1 auto; padding: var(--space-page-margin); min-height: 0; }
+  .panel {
+    background: var(--c-panel); border: 1px solid var(--c-border);
+    border-radius: 16px; padding: var(--pad-card);
+    display: flex; flex-direction: column; gap: var(--space-m);
+    height: 100%;
+  }
+  .panel-title { font-size: var(--font-subtitle-small); font-weight: 600; }
+  .panel-sub { font-size: var(--font-body-small); color: var(--c-text-muted); }
+
+  /* ---------- table ----------
+     Rule 1: EXACTLY ONE stretchy column at every width.
+     Above 760px that is the item name. Below 760px the item name becomes a
+     PINNED column, and a pinned column may never be a percentage — so the
+     stock column takes over as the stretchy one. */
+  .tw { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th, td {
+    padding: var(--space-xs) var(--space-m);
+    border-bottom: 1px solid var(--c-border);
+    text-align: left; vertical-align: middle;
+  }
+  thead th {
+    font-size: var(--font-body-small); font-weight: 700; color: var(--c-text-dim);
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .c-name  { width: auto; }                 /* the stretchy one */
+  .c-cat   { width: 120px; }
+  .c-uom   { width: 80px; }
+  .c-min,
+  .c-max   { width: 60px; }
+  .c-stock { width: 120px; }
+
+  tbody td { font-size: var(--font-body-default); color: var(--c-text-muted); }
+  td.c-name { font-size: var(--font-body-default); color: var(--c-text); font-weight: 500; }
+  tr.is-open td.c-name { font-weight: 700; }
+  tr.is-open > td { background: var(--c-accent-soft); }
+  .num { color: var(--c-text); font-weight: 600; }
+  .badge {
+    display: inline-block; padding: 4px var(--space-2xs); border-radius: 100px;
+    font-size: var(--font-body-small); font-weight: 700; color: #fff;
+  }
+  .b-med { background: var(--c-cat-med); } .b-ppe { background: var(--c-cat-ppe); }
+  .b-iv  { background: var(--c-cat-iv);  } .b-air { background: var(--c-cat-air); }
+  .status { display: flex; align-items: center; gap: var(--space-2xs); font-size: var(--font-body-small); font-weight: 600; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+  .s-ok { color: var(--c-ok); } .s-ok .dot { background: var(--c-ok); }
+  .s-lo { color: var(--c-warn); } .s-lo .dot { background: var(--c-warn); }
+  .s-out { color: var(--c-err); } .s-out .dot { background: var(--c-err); }
+
+  /* expanded detail row */
+  .detail > td { border-bottom: 1px solid var(--c-accent-line); padding: var(--space-m); }
+  .detail-grid { display: flex; flex-wrap: wrap; gap: var(--space-m); }
+  .photos { display: flex; flex-direction: column; gap: var(--space-2xs); flex: 0 0 180px; }
+  .photo { aspect-ratio: 9/5; border-radius: 8px; background: linear-gradient(135deg,#3a4050,#242833); }
+  .thumbs { display: flex; gap: var(--space-3xs); }
+  .thumb { width: 56px; height: 36px; border-radius: 4px; background: linear-gradient(135deg,#333846,#1f232c); }
+  .details { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: var(--space-xs); }
+  .f-label { font-size: var(--font-body-small); font-weight: 700; color: var(--c-text-dim); text-transform: uppercase; letter-spacing: .04em; }
+  .f-value { font-size: var(--font-body-default); color: var(--c-text); }
+  /* Measure in ch — already fluid via the font size, so never clamped. */
+  .prose { max-width: 75ch; }
+  .meta2 { display: flex; flex-wrap: wrap; gap: var(--space-m); }
+  .meta2 > div { flex: 1 1 180px; min-width: 0; }
+  .acts { display: flex; gap: var(--space-2xs); padding-top: var(--space-2xs); flex-wrap: wrap; }
+  .act {
+    min-height: var(--tap-target-min); display: inline-flex; align-items: center;
+    padding-inline: var(--pad-btn-sm-inline);
+    border-radius: 6px; font-size: var(--font-body-small); font-weight: 700; cursor: pointer;
+  }
+  .act-save { background: var(--c-accent); color: #fff; border: 0; }
+  .act-close { background: var(--c-panel); border: 1px solid var(--c-border); color: var(--c-text-muted); }
+
+  /* ---------- mobile tab bar ---------- */
+  .tabbar {
+    position: fixed; inset: auto 0 0 0; z-index: 10;
+    display: flex; justify-content: space-between;
+    gap: var(--space-3xs);
+    padding: var(--space-3xs) var(--space-2xs) calc(var(--space-2xs) + env(safe-area-inset-bottom));
+    background: rgba(23,25,33,.92);
+    border-top: 1px solid var(--c-border-strong);
+    backdrop-filter: blur(15px);
+  }
+  .tab {
+    flex: 1 1 0; min-width: 0;
+    min-height: var(--tap-target-min);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; color: var(--c-text-dim); text-decoration: none;
+    font-size: var(--font-body-small); font-weight: 600;
+  }
+  .tab[aria-current="page"] { color: var(--c-accent); }
+  .tab .glyph { width: 20px; height: 20px; opacity: .8; }
+
+  /* =====================================================================
+     STRUCTURAL STEPS — the only media queries in this file.
+     Each one answers a question that can be said out loud.
+     ===================================================================== */
+
+  /* "Is there room for a sidebar?" */
+  @media (min-width: 900px) {
+    .sidebar { display: flex; }
+    .tabbar { display: none; }
+    :root { --nav-h: 0px; }
+  }
+  @media (max-width: 899px) {
+    :root { --nav-h: 76px; }
+  }
+
+  /* "Does the table still fit, or must the name column pin and the rest slide?"
+     Note what is NOT done here: columns are not display:none'd. The expanded
+     detail row spans all six columns, so hiding cells leaves the columns alive
+     and the width distribution goes wrong — the pinned column measured 418px
+     against a 170px token. Keeping every column and scrolling is both simpler
+     and what the frame was describing in the first place: the frozen-panel
+     look is an OUTCOME of pinning, not a separate layout. */
+  @media (max-width: 899px) {
+    table { table-layout: fixed; min-width: 700px; }
+    /* A pinned column must be an ABSOLUTE size — never a percentage. */
+    .c-name {
+      position: sticky; left: 0; z-index: 1;
+      width: 170px;
+      background: var(--c-panel);
+    }
+    thead .c-name { background: var(--c-panel); }
+    tr.is-open td.c-name { background: #232733; }
+
+    /* RULE 1: exactly one stretchy column, at every width. Without this the
+       leftover space between the 610px of declared columns and the 700px
+       table is shared across ALL of them, inflating the pinned column from
+       170px to 195px. Measured, not guessed. */
+    .c-stock { width: auto; }
+
+    .detail-grid { flex-direction: column; flex-wrap: nowrap; }
+    /* In a COLUMN flex container flex-shrink applies to height, so the photo
+       block was squashed to 104px while its child stayed 180px and spilled
+       over the text. Opt out of shrinking. */
+    .photos { flex: none; }
+
+    /* The detail panel is prose, and prose must never need sideways scrolling
+       to read. The table slides under the pinned column; the expanded panel
+       sticks to the viewport instead of travelling with it. */
+    .detail > td { padding: 0; }
+    .detail-grid {
+      position: sticky; left: 0;
+      width: calc(100vw - (var(--space-page-margin) * 2) - (var(--pad-card) * 2));
+      padding: var(--space-m);
+    }
+  }
+
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Sidebar is written AFTER main in source order? No: it is nav, and on
+       mobile it becomes the fixed tab bar at the end of the document, so the
+       reading order stays content-first on a phone. -->
+  <aside class="sidebar">
+    <div>
+      <div class="brand">
+        <div class="brand-dot"></div>
+        <div>
+          <div class="brand-name">ESLUP</div>
+          <div class="brand-sub">Med-Control</div>
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Workspace</div>
+        <a class="nav-item" href="#"><span class="glyph"></span><span class="t">Dashboard</span></a>
+        <a class="nav-item" href="#"><span class="glyph"></span><span class="t">Notifications</span></a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Admin</div>
+        <a class="nav-item" href="#"><span class="glyph"></span><span class="t">Stations</span></a>
+        <a class="nav-item" href="#"><span class="glyph"></span><span class="t">Users</span></a>
+        <a class="nav-item" href="#"><span class="glyph"></span><span class="t">Invite Codes</span></a>
+        <a class="nav-item" href="#" aria-current="page"><span class="glyph"></span><span class="t">Item Catalogue</span></a>
+      </div>
+    </div>
+    <div class="sidebar-foot">
+      <div class="avatar">AR</div>
+      <div style="min-width:0">
+        <div class="t" style="font-size:var(--font-body-default);font-weight:600">Aisha Rahman</div>
+        <div class="t" style="font-size:var(--font-body-small);color:var(--c-text-muted)">Director</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <nav class="crumb"><span>Admin</span><span>/</span><b>Item Catalogue</b></nav>
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <label class="search"><span class="glyph" style="width:14px;height:14px"></span><span class="t">Search items…</span></label>
+        <span class="pill">Category&nbsp;<b>All</b></span>
+      </div>
+      <div class="toolbar-right">
+        <div class="seg" role="tablist">
+          <span role="tab" aria-selected="true">Table</span>
+          <span role="tab" aria-selected="false">Grid</span>
+        </div>
+        <button class="btn-primary"><span class="glyph" style="width:14px;height:14px"></span>Add item</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <section class="panel">
+        <header>
+          <h1 class="panel-title">Medical Supplies</h1>
+          <p class="panel-sub">Centralized clinical inventory index</p>
+        </header>
+
+        <div class="tw">
+          <table>
+            <thead>
+              <tr>
+                <th class="c-name"><span class="t">Item Name</span></th>
+                <th class="c-cat"><span class="t">Category</span></th>
+                <th class="c-uom"><span class="t">UOM</span></th>
+                <th class="c-min"><span class="t">Min</span></th>
+                <th class="c-max"><span class="t">Max</span></th>
+                <th class="c-stock"><span class="t">Stock Status</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="is-open">
+                <td class="c-name"><span class="t">Adrenaline 1mg Ampoule</span></td>
+                <td class="c-cat"><span class="badge b-med">Medication</span></td>
+                <td class="c-uom"><span class="t">Ampoule</span></td>
+                <td class="c-min num"><span class="t">20</span></td>
+                <td class="c-max num"><span class="t">100</span></td>
+                <td class="c-stock"><span class="status s-ok"><i class="dot"></i><span class="t">Sufficient</span></span></td>
+              </tr>
+              <tr class="detail">
+                <td colspan="6">
+                  <div class="detail-grid">
+                    <div class="photos">
+                      <div class="photo" role="img" aria-label="Product photo: adrenaline ampoule storage shelf"></div>
+                      <div class="thumbs"><div class="thumb"></div><div class="thumb"></div></div>
+                    </div>
+                    <div class="details">
+                      <div>
+                        <div class="f-label">Description</div>
+                        <p class="f-value prose" style="margin:.25rem 0 0">Adrenaline (epinephrine) injection 1mg/ml ampoules. Critical vasoactive drug utilized primarily for advanced cardiac life support, anaphylactic shock, and acute asthma intervention. Must be stored inside a temperature-regulated environment shielded from UV exposure.</p>
+                      </div>
+                      <div class="meta2">
+                        <div><div class="f-label">Storage Criteria</div><div class="f-value t">Shielded from UV · Room Temp</div></div>
+                        <div><div class="f-label">Global SKU ID</div><div class="f-value t">MED-ADR-1MG-AMP</div></div>
+                      </div>
+                      <div class="acts">
+                        <button class="act act-save">Save Parameters</button>
+                        <button class="act act-close">Collapse Panel</button>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="c-name"><span class="t">Fentanyl 100mcg Ampoule</span></td>
+                <td class="c-cat"><span class="badge b-med">Medication</span></td>
+                <td class="c-uom"><span class="t">Ampoule</span></td>
+                <td class="c-min num"><span class="t">10</span></td>
+                <td class="c-max num"><span class="t">50</span></td>
+                <td class="c-stock"><span class="status s-out"><i class="dot"></i><span class="t">Critical Out</span></span></td>
+              </tr>
+              <tr>
+                <td class="c-name"><span class="t">N95 Surgical Mask</span></td>
+                <td class="c-cat"><span class="badge b-ppe">PPE</span></td>
+                <td class="c-uom"><span class="t">Piece</span></td>
+                <td class="c-min num"><span class="t">100</span></td>
+                <td class="c-max num"><span class="t">500</span></td>
+                <td class="c-stock"><span class="status s-ok"><i class="dot"></i><span class="t">Sufficient</span></span></td>
+              </tr>
+              <tr>
+                <td class="c-name"><span class="t">Normal Saline 500ml IV</span></td>
+                <td class="c-cat"><span class="badge b-iv">IV Fluids</span></td>
+                <td class="c-uom"><span class="t">Bag</span></td>
+                <td class="c-min num"><span class="t">40</span></td>
+                <td class="c-max num"><span class="t">200</span></td>
+                <td class="c-stock"><span class="status s-lo"><i class="dot"></i><span class="t">Low Stock</span></span></td>
+              </tr>
+              <tr>
+                <td class="c-name"><span class="t">Endotracheal Tube 7.5mm</span></td>
+                <td class="c-cat"><span class="badge b-air">Airway</span></td>
+                <td class="c-uom"><span class="t">Piece</span></td>
+                <td class="c-min num"><span class="t">5</span></td>
+                <td class="c-max num"><span class="t">25</span></td>
+                <td class="c-stock"><span class="status s-ok"><i class="dot"></i><span class="t">Sufficient</span></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Mobile navigation. Last in source order so the tab key and a screen
+     reader reach the content first, exactly as on the phone. -->
+<nav class="tabbar" aria-label="Main">
+  <a class="tab" href="#"><span class="glyph"></span>Dashboard</a>
+  <a class="tab" href="#"><span class="glyph"></span>Stations</a>
+  <a class="tab" href="#" aria-current="page"><span class="glyph"></span>Catalogue</a>
+  <a class="tab" href="#"><span class="glyph"></span>Users</a>
+  <a class="tab" href="#"><span class="glyph"></span>More</a>
+</nav>
+</body>
+</html>

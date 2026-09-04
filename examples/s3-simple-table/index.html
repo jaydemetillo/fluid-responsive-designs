@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S3 · Simple table — desktop → mobile</title>
+<link rel="stylesheet" href="./tokens.css">
+<style>
+  /* Zero references: every token below came from the default profile with no
+     design input at all. Anchors 320 → 1440. */
+  :root {
+    --c-bg: #fbfbfd;
+    --c-surface: #fff;
+    --c-line: #e4e7ec;
+    --c-text: #16181d;
+    --c-text-dim: #5c6470;
+    --c-accent: #1361f0;
+    --c-ok: #067a52;
+    --c-warn: #8a5a00;
+    --c-err: #b3261e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--c-bg); color: var(--c-text);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: var(--font-body-default);
+    line-height: var(--leading-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  .t { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 0; }
+  :where(a, button):focus-visible {
+    outline: var(--focus-ring-width) solid var(--c-accent);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  .page { max-width: 1440px; margin-inline: auto; padding: var(--space-xl) var(--space-page-margin); }
+  h1 { font-size: var(--font-title-small); font-weight: 700; letter-spacing: var(--tracking-title); line-height: var(--leading-tight); margin: 0 0 var(--space-2xs); }
+  .lede { font-size: var(--font-body-default); color: var(--c-text-dim); max-width: 75ch; margin: 0 0 var(--space-xl); }
+
+  .card {
+    background: var(--c-surface); border: 1px solid var(--c-line);
+    border-radius: 12px; overflow: hidden;
+  }
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-m);
+    padding: var(--pad-card); border-bottom: 1px solid var(--c-line); flex-wrap: wrap;
+  }
+  .card-head h2 { font-size: var(--font-subtitle-small); font-weight: 600; margin: 0; }
+  .btn {
+    min-height: var(--tap-target-min); display: inline-flex; align-items: center;
+    padding-inline: var(--pad-btn-md-inline);   /* static */
+    background: var(--c-accent); color: #fff; border: 0; border-radius: 8px;
+    font-size: var(--font-body-default); font-weight: 600; cursor: pointer;
+  }
+
+  .tw { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th, td { padding: var(--space-s) var(--pad-list-item-inline); text-align: left; border-bottom: 1px solid var(--c-line); }
+  thead th {
+    font-size: var(--font-body-small); text-transform: uppercase; letter-spacing: .05em;
+    color: var(--c-text-dim); font-weight: 700;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+
+  /* Exactly one stretchy column at every width. */
+  .c-item   { width: auto; }
+  .c-owner  { width: 180px; }
+  .c-due    { width: 130px; }
+  .c-status { width: 120px; }
+
+  td.c-item { font-weight: 600; }
+  .pill {
+    display: inline-block; padding: 2px var(--space-2xs); border-radius: 100px;
+    font-size: var(--font-body-small); font-weight: 700;
+  }
+  .p-ok  { background: #e6f4ef; color: var(--c-ok); }
+  .p-due { background: #fdf3e2; color: var(--c-warn); }
+  .p-late{ background: #fdeceb; color: var(--c-err); }
+
+  .note {
+    margin-top: var(--space-l); font-size: var(--font-body-small); color: var(--c-text-dim);
+    max-width: 75ch;
+  }
+  .note code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  /* =====================================================================
+     ONE structural step, and it answers a question out loud:
+     "Is there room for a secondary owner and due date?"
+     Below it, the item name pins and the status column becomes stretchy —
+     because a pinned column may never be a percentage.
+     ===================================================================== */
+  @media (max-width: 700px) {
+    .c-owner, .c-due { display: none; }
+    .c-item { position: sticky; left: 0; z-index: 1; width: 180px; background: var(--c-surface); }
+    thead .c-item { background: var(--c-surface); }
+    .c-status { width: auto; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+  <h1>Equipment checks</h1>
+  <p class="lede">Every appliance bay, with the last completed check and who signed it off. Overdue bays are listed first.</p>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Bedok Fire Station</h2>
+      <button class="btn">Start a check</button>
+    </div>
+
+    <div class="tw">
+      <table>
+        <thead>
+          <tr>
+            <th class="c-item"><span class="t">Equipment</span></th>
+            <th class="c-owner"><span class="t">Checked by</span></th>
+            <th class="c-due"><span class="t">Due</span></th>
+            <th class="c-status"><span class="t">Status</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="c-item"><span class="t">Breathing apparatus set 4</span></td>
+            <td class="c-owner"><span class="t">Aisha Rahman</span></td>
+            <td class="c-due"><span class="t">12 Mar</span></td>
+            <td class="c-status"><span class="pill p-late">Overdue</span></td>
+          </tr>
+          <tr>
+            <td class="c-item"><span class="t">Hydraulic cutter</span></td>
+            <td class="c-owner"><span class="t">Daniel Ong</span></td>
+            <td class="c-due"><span class="t">14 Mar</span></td>
+            <td class="c-status"><span class="pill p-due">Due soon</span></td>
+          </tr>
+          <tr>
+            <td class="c-item"><span class="t">Thermal imaging camera</span></td>
+            <td class="c-owner"><span class="t">Priya Nair</span></td>
+            <td class="c-due"><span class="t">28 Mar</span></td>
+            <td class="c-status"><span class="pill p-ok">Complete</span></td>
+          </tr>
+          <tr>
+            <td class="c-item"><span class="t">Positive pressure ventilation fan</span></td>
+            <td class="c-owner"><span class="t">Marcus Tan</span></td>
+            <td class="c-due"><span class="t">02 Apr</span></td>
+            <td class="c-status"><span class="pill p-ok">Complete</span></td>
+          </tr>
+          <tr>
+            <td class="c-item"><span class="t">Ladder 13.5m triple extension</span></td>
+            <td class="c-owner"><span class="t">Siti Nurhaliza</span></td>
+            <td class="c-due"><span class="t">09 Apr</span></td>
+            <td class="c-status"><span class="pill p-ok">Complete</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="note">
+    Built from zero references. Every size here came from <code>profiles/default.json</code>
+    with no design input — anchors 320&nbsp;→&nbsp;1440px. Drag the window: type and spacing
+    interpolate continuously, and the single breakpoint at 700px only ever changes
+    <em>structure</em> — which columns exist and which one stretches.
+  </p>
+</main>
+</body>
+</html>

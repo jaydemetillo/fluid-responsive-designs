@@ -1,0 +1,19 @@
+{
+  "id": "s2-station-dashboard",
+  "name": "S2 \u2014 Station Dashboard (mobile frame only)",
+  "anchors": {
+    "min": 390,
+    "max": 1440
+  },
+  "mobile": {
+    "--font-body-small": 13,
+    "--font-body-default": 14,
+    "--font-subtitle-small": 16,
+    "--font-subtitle-default": 18,
+    "--font-title-default": 24,
+    "--space-m": 16,
+    "--space-l": 20,
+    "--space-page-margin": 16
+  },
+  "dropUnreferencedType": true
+}
